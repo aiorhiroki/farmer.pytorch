@@ -1,3 +1,5 @@
+# augmetation, preprocessの定義
+
 def to_tensor(x, **kwargs):
     return x.transpose(2, 0, 1).astype('float32')
 

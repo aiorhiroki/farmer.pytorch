@@ -7,8 +7,11 @@ from torch.utils.data import DataLoader
 @dataclass(init=False)
 class LoadDatasetABC:
     batch_size: int
-    img_preprocessing_fns = List[]
-    label_preprocessing_fns = List[]
+    width: int
+    height: int
+    nb_class = int
+    loader = Callable[[str, str, str, List[str]], List[List[str]]]
+    augmentations = List[Callable]
 
     @classmethod
     def __call__(cls, annotation_set):

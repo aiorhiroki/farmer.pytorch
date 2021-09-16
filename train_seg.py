@@ -1,12 +1,15 @@
 import torch
 
-from GetAnnotation import GetAnnotationTask, get_annotation_fn
+from GetAnnotation import GetAnnotationABC, get_annotation_fn
+from LoadDataset import LoadDatasetABC, load_dataset_base, load_dataset_fn
+from Augmentation import AugmentationABC, augmentation_fn
 import segmentation_models_pytorch as smp
 
 
 def command():
     annotation_files = GetAnnotationImp()()  # アノテーションファイル取得
-    dataset = LoadDatasetImp()(annotation_files)  # データ読み込み・前処理
+    augmentations = AugmentationImp()()  # データ拡張方法の定義
+    dataset = LoadDatasetImp()(annotation_files, augmentations)  # データ読み込み・前処理
     model = build_model_task()  # モデル構築
     loss_func = get_loss_func_task()  # 損失関数
     metrics = get_metrics_task()  # 評価指標
@@ -31,20 +34,18 @@ class GetAnnotationImp(GetAnnotationABC):
     """
 
 
+class AugmentationImp(AugmentationABC):
+    augmentations = [
+        albu.HorizontalFlip(p=0.5),
+        augmentation_fn.custom_aug
+    ]
+
+
 class LoadDatasetImp(LoadDatasetABC):
     batch_size = 16
     width, height = (640, 320)
     nb_class = 2
-    loader = load_dataset_sgm
-    img_preprocessing_fns = [
-        resize  # Not implemented
-        to_tensor, # Not implemented
-        normalize, # Not implemented
-    ]
-    label_preprocessing_fns = [
-        resize, # Not implemented
-        to_tensor # Not implemented
-    ]
+    loader = load_dataset_base.LoadDatasetSgm
 
 
 def build_model_task():

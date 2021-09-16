@@ -28,3 +28,14 @@ class LoadDatasetSgm(Dataset):
 
     def __len__(self):
         return len(self.annotations)
+
+
+# img_preprocessing_fns = [
+#     resize(width, height)  # Not implemented
+#     to_tensor, # Not implemented
+#     normalize, # Not implemented
+# ]
+# label_preprocessing_fns = [
+#     resize(width, height), # Not implemented
+#     to_tensor # Not implemented
+# ]

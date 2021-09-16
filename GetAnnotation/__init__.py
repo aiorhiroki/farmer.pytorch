@@ -1,1 +1,1 @@
-from .get_annotation_task import GetAnnotationABC
+from .get_annotation_abc import GetAnnotationABC
