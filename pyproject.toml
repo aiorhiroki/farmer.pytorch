@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "pytorch_seg"
+version = "0.1.0"
+description = ""
+authors = ["aiorhiroki <1234defgsigeru@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7,<3.8"
+segmentation-models-pytorch = "^0.2.0"
+opencv-python = "^4.5.3"
+albumentations = "^1.0.3"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
