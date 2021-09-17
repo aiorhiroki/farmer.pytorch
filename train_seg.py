@@ -4,15 +4,18 @@ from GetAnnotation import GetAnnotationABC, get_annotation_fn
 from LoadDataset import LoadDatasetABC, load_dataset_base, load_dataset_fn
 from Augmentation import AugmentationABC, augmentation_fn
 import segmentation_models_pytorch as smp
+import albumentations as albu
 
 
 def command():
     annotation_files = GetAnnotationImp()()  # アノテーションファイル取得
-    augmentations = AugmentationImp()()  # データ拡張方法の定義
-    dataset = LoadDatasetImp()(annotation_files, augmentations)  # データ読み込み・前処理
-    model = build_model_task()  # モデル構築
+
+    model = get_model_task()  # モデル構築
     loss_func = get_loss_func_task()  # 損失関数
     metrics = get_metrics_task()  # 評価指標
+    augmentations = get_augmentation_task()  # データ拡張方法の定義
+
+    dataset = LoadDatasetImp()(annotation_files, augmentations)  # データ読み込み・前処理
     model_exec_task(model, loss_func, metrics, dataset)  # 学習
 
 
@@ -34,21 +37,7 @@ class GetAnnotationImp(GetAnnotationABC):
     """
 
 
-class AugmentationImp(AugmentationABC):
-    augmentations = [
-        albu.HorizontalFlip(p=0.5),
-        augmentation_fn.custom_aug
-    ]
-
-
-class LoadDatasetImp(LoadDatasetABC):
-    batch_size = 16
-    width, height = (640, 320)
-    nb_class = 2
-    loader = load_dataset_base.LoadDatasetSgm
-
-
-def build_model_task():
+def get_model_task():
     model = smp.DeepLabV3Plus(
         encoder_name="efficientnet-b7",
         encoder_weights="imagenet",
@@ -67,6 +56,29 @@ def get_loss_func_task():
 def get_metrics_task():
     metrics = smp.utils.metrics.Fscore(threshold=0.5, ignore_channels=[0])
     return metrics
+
+
+def get_augmentation_task():
+    transforms = [
+        albu.HorizontalFlip(p=0.5),
+        albu.OneOf(
+            [
+                albu.IAASharpen(p=1),
+                albu.Blur(blur_limit=3, p=1),
+                albu.MotionBlur(blur_limit=3, p=1),
+            ],
+            p=0.9,
+        ),
+    ]
+
+    return albu.Compose(transforms)
+
+
+class LoadDatasetImp(LoadDatasetABC):
+    batch_size = 16
+    width, height = (640, 320)
+    nb_class = 2
+    loader = load_dataset_base.LoadDatasetSgm
 
 
 def model_exec_task(model, loss_func, metrics, dataset):
