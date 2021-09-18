@@ -32,7 +32,7 @@ def seg_case_first_groups(
     image_dir: str,
     label_dir: str,
     group_dirs: List[str]
-    ) -> List[List[Path]]:
+) -> List[List[Path]]:
 
     """
     画像とアノテーションがセットになったリストを作る

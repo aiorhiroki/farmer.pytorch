@@ -1,12 +1,14 @@
 from torch.utils.data import Dataset
 from dataclasses import dataclass
+from typing import List, Callable
+import cv2
 
 
 @dataclass
 class LoadDatasetSgm(Dataset):
-    annotations
-    preprocessing
-    augmentation
+    annotations: List
+    preprocessing: Callable
+    augmentation: Callable
 
     def __getitem__(self, i):
         img_file, label_file = self.annotations[i]
@@ -18,24 +20,13 @@ class LoadDatasetSgm(Dataset):
         if self.augmentation:
             sample = self.augmentation(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
-        
+
         # apply preprocessing
         if self.preprocessing:
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']
 
-        return image, mask 
+        return image, mask
 
     def __len__(self):
         return len(self.annotations)
-
-
-# img_preprocessing_fns = [
-#     resize(width, height)  # Not implemented
-#     to_tensor, # Not implemented
-#     normalize, # Not implemented
-# ]
-# label_preprocessing_fns = [
-#     resize(width, height), # Not implemented
-#     to_tensor # Not implemented
-# ]

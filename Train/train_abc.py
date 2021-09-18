@@ -10,6 +10,13 @@ class TrainABC:
 
 
 def model_exec_task(model, loss_func, metrics, dataset):
+
+    train_loader = DataLoader(
+        train_dataset, batch_size=cls.batch_size, shuffle=True
+    )
+    valid_loader = DataLoader(
+        val_dataset, batch_size=cls.batch_size, shuffle=False
+    )
     train_loader, valid_loader = dataset
     optimizer = torch.optim.Adam([dict(params=model.parameters(), lr=0.0001)])
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
