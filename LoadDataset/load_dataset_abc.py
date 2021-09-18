@@ -11,10 +11,9 @@ class LoadDatasetABC:
     height: int
     nb_class = int
     loader = Callable[[str, str, str, List[str]], List[List[str]]]
-    augmentations = List[Callable]
 
     @classmethod
-    def __call__(cls, annotation_set):
+    def __call__(cls, annotation_set, augmentations):
         print("override load dataset flow")
         train_set, val_set = annotation_set
 

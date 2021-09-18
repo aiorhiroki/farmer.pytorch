@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from GetAnnotation import get_annotation_fn
 from typing import List, Callable
 
 
