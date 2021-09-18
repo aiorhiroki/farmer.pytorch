@@ -7,6 +7,7 @@ from typing import List, Callable
 
 @dataclass(init=False)
 class TrainABC:
+    pass
 
 
 def model_exec_task(model, loss_func, metrics, dataset):

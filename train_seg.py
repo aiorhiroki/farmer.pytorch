@@ -1,8 +1,9 @@
-from GetAnnotation import GetAnnotationABC, get_annotation_fn
-from Dataset import DatasetABC, load_dataset_base, load_dataset_fn
-from Augmentation import AugmentationABC, augmentation_fn
 import segmentation_models_pytorch as smp
 import albumentations as albu
+
+from GetAnnotation import GetAnnotationABC, get_annotation_fn
+from GetDataset import GetDatasetSgmABC
+from Train import TrainABC
 
 
 def command():
@@ -13,8 +14,8 @@ def command():
     metrics = get_metrics_task()  # 評価指標
     augmentations = get_augmentation_task()  # データ拡張方法の定義
 
-    dataset = DatasetImp()(annotation_files, augmentations)  # データ読み込み・前処理
-    Train()(model, loss_func, metrics, dataset)  # 学習
+    dataset = DatasetImp(annotation_files, augmentations)()  # データ読み込み・前処理
+    TrainImp()(model, loss_func, metrics, dataset)  # 学習
 
 
 class GetAnnotationImp(GetAnnotationABC):
@@ -72,16 +73,28 @@ def get_augmentation_task():
     return albu.Compose(transforms)
 
 
-class DatasetImp(DatasetABC):
-    batch_size = 16
+class DatasetImp(GetDatasetSgmABC):
     width, height = (640, 320)
     nb_class = 2
-    loader = load_dataset_base.LoadDatasetSgm
+
+    def __init__(self, annotation, augmentation):
+        self.annotation = annotation
+        self.augmentation = augmentation
+        super().__init__(annotation, augmentation)
+
+
+    """
+    @classmethod
+    def __getitem__(self, i):
+        # you can override getitem function
+        return in, out
+    """
 
 
 class TrainImp(TrainABC):
+    batch_size = 16
     epoch = 16
-    
+
 
 if __name__ == "__main__":
     command()
