@@ -1,5 +1,6 @@
 import segmentation_models_pytorch as smp
 import albumentations as albu
+import torch
 
 from GetAnnotation import GetAnnotationABC, get_annotation_fn
 from GetDataset import GetDatasetSgmABC
@@ -7,19 +8,22 @@ from Train import TrainABC
 
 
 def command():
-    annotation_files = GetAnnotationImp()()  # アノテーションファイル取得
+    train_anno, val_anno = GetAnnotationImp()()  # アノテーションファイル取得
 
     model = get_model_task()  # モデル構築
     loss_func = get_loss_func_task()  # 損失関数
     metrics = get_metrics_task()  # 評価指標
-    augmentations = get_augmentation_task()  # データ拡張方法の定義
+    augmentation = get_augmentation_task()  # データ拡張方法の定義
 
-    dataset = DatasetImp(annotation_files, augmentations)()  # データ読み込み・前処理
-    TrainImp()(model, loss_func, metrics, dataset)  # 学習
+    train_dataset = DatasetImp(train_anno, augmentation)  # データ読み込み・前処理
+    val_dataset = DatasetImp(val_anno, augmentation)
+
+    TrainImp(model, loss_func, metrics, train_dataset, val_dataset)()  # 学習
 
 
 class GetAnnotationImp(GetAnnotationABC):
-    target = "/mnt/cloudy_z/src/yishikawa/input/Images/Ureter/train_test_cross_val/external/positive"
+    target = "/mnt/cloudy_z/src/yishikawa/input/Images/Ureter/ \
+              train_test_cross_val/external/positive"
     img_dir = "movieframe"
     label_dir = "label"
     train_dirs = ["cv1"]
@@ -74,26 +78,24 @@ def get_augmentation_task():
 
 
 class DatasetImp(GetDatasetSgmABC):
-    width, height = (640, 320)
+    width = 640
+    height = 320
     nb_class = 2
 
-    def __init__(self, annotation, augmentation):
-        self.annotation = annotation
-        self.augmentation = augmentation
-        super().__init__(annotation, augmentation)
-
-
     """
-    @classmethod
     def __getitem__(self, i):
         # you can override getitem function
+        # use variable, self.annotation, self.augmentation, self.width, etc...
         return in, out
     """
 
 
 class TrainImp(TrainABC):
     batch_size = 16
-    epoch = 16
+    epochs = 16
+    lr = 0.001
+    gpu = 0
+    optimizer = torch.optim.Adam
 
 
 if __name__ == "__main__":

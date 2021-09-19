@@ -1,8 +1,6 @@
-from dataclasses import dataclass
 from typing import List, Callable
 
 
-@dataclass(init=False)
 class GetAnnotationABC:
     target: str
     img_dir: str

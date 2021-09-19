@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
-from typing import List, Callable
 import cv2
+import numpy as np
 
 
 class GetDatasetSgmABC(Dataset):
@@ -8,13 +8,12 @@ class GetDatasetSgmABC(Dataset):
     height: int
     nb_class: int
 
-
-    def __init__(self, annotations, augmentation):
-        self.annotations = annotation
+    def __init__(self, annotation, augmentation):
+        self.annotation = annotation
         self.augmentation = augmentation
 
     def __getitem__(self, i):
-        img_file, label_file = self.annotations[i]
+        img_file, label_file = self.annotation[i]
 
         image = cv2.imread(img_file)
         mask = cv2.imread(label_file, 0)
@@ -32,7 +31,7 @@ class GetDatasetSgmABC(Dataset):
         # preprocess image for input
         image = cv2.resize(image, (self.width, self.height)) / 255.
         image = image.transpose(2, 0, 1).astype('float32')
-    
+
         # resize and onehot for mask
         label = np.zeros((self.nb_class, self.height, self.width))
         for class_id in range(self.nb_class):
@@ -42,4 +41,4 @@ class GetDatasetSgmABC(Dataset):
         return image, label
 
     def __len__(self):
-        return len(self.annotations)
+        return len(self.annotation)
