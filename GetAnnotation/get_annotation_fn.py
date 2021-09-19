@@ -4,11 +4,11 @@ from pathlib import Path
 
 
 def seg_case_first_targets(
-    annotation_path: str,
-    image_dir: str,
-    label_dir: str,
-    target_dirs: List[str]
-) -> List[List[Path]]:
+      annotation_path: str,
+      image_dir: str,
+      label_dir: str,
+      target_dirs: List[str]
+      ) -> List[List[Path]]:
 
     """
     画像とアノテーションがセットになったリストを作る
@@ -28,11 +28,11 @@ def seg_case_first_targets(
 
 
 def seg_case_first_groups(
-    annotation_path: str,
-    image_dir: str,
-    label_dir: str,
-    group_dirs: List[str]
-) -> List[List[Path]]:
+      annotation_path: str,
+      image_dir: str,
+      label_dir: str,
+      group_dirs: List[str]
+      ) -> List[List[Path]]:
 
     """
     画像とアノテーションがセットになったリストを作る
@@ -57,6 +57,6 @@ def seg_case_first_groups(
 def _get_img_files(p_dir: Path) -> List[Path]:
     ImageEx = "jpg|jpeg|png|gif|bmp"
     img_files = [
-        p for p in p_dir.glob('*') if re.search(f'.*\.({ImageEx})', str(p))
+        p for p in p_dir.glob('*') if re.search(rf'.*\.({ImageEx})', str(p))
     ]
     return img_files
