@@ -15,8 +15,8 @@ class GetDatasetSgmABC(Dataset):
     def __getitem__(self, i):
         img_file, label_file = self.annotation[i]
 
-        image = cv2.imread(img_file)
-        mask = cv2.imread(label_file, 0)
+        image = cv2.imread(str(img_file))
+        mask = cv2.imread(str(label_file), 0)
 
         # apply augmentations
         if self.augmentation:
@@ -36,7 +36,7 @@ class GetDatasetSgmABC(Dataset):
         label = np.zeros((self.nb_class, self.height, self.width))
         for class_id in range(self.nb_class):
             class_mask = np.array(mask == class_id, dtype=np.uint8)
-            label[class_id] = np.resize(class_mask, (self.width, self.height))
+            label[class_id] = cv2.resize(class_mask, (self.width, self.height))
 
         return image, label
 

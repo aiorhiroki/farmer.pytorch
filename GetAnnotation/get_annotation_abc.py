@@ -20,7 +20,8 @@ class GetAnnotationABC:
         validation_set = cls.get_val_fn(
             cls.target, cls.img_dir, cls.label_dir, cls.val_dirs
         )
+        print("completed")
         return train_set, validation_set
 
     def __init__(self):
-        print("read annotation task")
+        print("get annotation..."+" "*10, end="")

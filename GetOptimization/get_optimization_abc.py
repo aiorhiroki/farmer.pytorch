@@ -1,7 +1,8 @@
 import torch
+from .get_optimization_fn import get_prob_bar
 
 
-class TrainABC:
+class GetOptimizationABC:
     batch_size: int
     epochs: int
     lr: float
@@ -31,7 +32,9 @@ class TrainABC:
             [dict(params=self.model.parameters(), lr=self.lr)])
 
         for epoch in range(self.epochs):
+            self.model.train()
             running_loss = 0.0
+            nb_train_iters = len(train_loader.dataset) // self.batch_size
             for i, data in enumerate(train_loader, 1):
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
@@ -47,24 +50,33 @@ class TrainABC:
 
                 # print statistics
                 running_loss += loss.item()
-                if i % 10 == 0:
-                    print(epoch + 1, i, f"loss: {running_loss / 10}")
-                    running_loss = 0.0
+                cout = f"epoch: {epoch + 1}/{self.epochs} "
+                cout += get_prob_bar(i, nb_train_iters)
+                cout += f" loss: {(running_loss / i):.5g}"
+                if i == 0:
+                    print(cout)
+                else:
+                    print("\r"+cout, end="")
 
             # validation step
-            total_loss, total_iou = 0, 0
+            print("\nValidation step starts...")
+            self.model.eval()
+            total_loss, total_dice = 0, 0
             with torch.no_grad():
-                for (inputs, labels) in valid_loader:
+                nb_valid_iters = len(valid_loader.dataset) // self.batch_size
+                for i, data in enumerate(valid_loader, 1):
+                    inputs, labels = data
                     inputs, labels = inputs.to(device), labels.to(device)
                     outputs = self.model(inputs)
                     total_loss += self.loss_func(outputs, labels).item()
-                    total_iou += self.metrics(outputs, labels).item()
-            mean_loss = total_loss / len(valid_loader.dataset)
-            mean_iou = total_iou / len(valid_loader.dataset)
-            print("Epoch: {epoch+1}")
-            print(f"mean_loss: {mean_loss}, mean_iou: {mean_iou}")
+                    total_dice += self.metrics(outputs, labels).item()
 
-            model_path = f'model_epoch{epoch}.pth'
+                    cout = get_prob_bar(i, nb_valid_iters)
+                    cout += f" loss: {(total_loss / i):.5g}"
+                    cout += f" dice: {(total_dice / i):.5g}"
+                    print("\r"+cout, end="")
+
+            model_path = f'models/model_epoch{epoch}.pth'
             torch.save(self.model.state_dict(), model_path)
 
-        print('Finished Training')
+        print('\nFinished Training')
