@@ -1,5 +1,5 @@
 import torch
-from .get_optimization_fn import get_prob_bar
+from .get_optimization_fn import get_prog_bar
 
 
 class GetOptimizationABC:
@@ -52,7 +52,7 @@ class GetOptimizationABC:
                 # print statistics
                 training_loss += loss.item()
                 training_dice += self.metrics(outputs, labels).item()
-                cout = get_prob_bar(i, nb_iters)
+                cout = get_prog_bar(i, nb_iters)
                 cout += f" loss: {(training_loss / i):.5g}"
                 cout += f" dice: {(training_dice / i):.5g}"
                 print("\r"+cout, end="")
@@ -70,7 +70,7 @@ class GetOptimizationABC:
                     validation_loss += self.loss_func(outputs, labels).item()
                     validation_dice += self.metrics(outputs, labels).item()
 
-                    cout = get_prob_bar(i, nb_iters)
+                    cout = get_prog_bar(i, nb_iters)
                     cout += f" val_loss: {(validation_loss / i):.5g}"
                     cout += f" val_dice: {(validation_dice / i):.5g}"
                     print("\r"+cout, end="")
