@@ -12,5 +12,5 @@ docker run \
     --name cowboy \
     pyroch_seg:latest
 
-docker exec -it cowboy python train_seg.py
+docker exec -it cowboy python train.py
 ```
