@@ -29,7 +29,7 @@ class GetDatasetSgmABC(Dataset):
         image = image.transpose(2, 0, 1).astype('float32') / 255.
 
         masks = [(mask == v) for v in self.class_values]
-        mask = np.stack(masks, axis=-1).astype('float')
+        mask = np.array(masks, dtype='float32')
 
         return image, mask
 

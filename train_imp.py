@@ -57,7 +57,7 @@ def get_augmentation_task():
     ]
 
     val_transform = [
-        albu.PadIfNeeded(320, 640)
+        albu.PadIfNeeded(736, 1280)
     ]
 
     return albu.Compose(train_transform), albu.Compose(val_transform)
