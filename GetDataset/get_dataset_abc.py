@@ -1,12 +1,11 @@
 from torch.utils.data import Dataset
 import cv2
 import numpy as np
+from typing import List
 
 
 class GetDatasetSgmABC(Dataset):
-    width: int
-    height: int
-    nb_class: int
+    class_values: List[int]
 
     def __init__(self, annotation, augmentation):
         self.annotation = annotation
@@ -24,21 +23,18 @@ class GetDatasetSgmABC(Dataset):
             image, mask = sample['image'], sample['mask']
 
         # custom preprocessing
-        mask[mask == 206] = 1
-        mask[mask == 209] = 1
-        mask[mask > 1] = 0
+        image, mask = self.preprocess(image, mask)
 
         # preprocess image for input
-        image = cv2.resize(image, (self.width, self.height)) / 255.
-        image = image.transpose(2, 0, 1).astype('float32')
+        image = image.transpose(2, 0, 1).astype('float32') / 255.
 
-        # resize and onehot for mask
-        label = np.zeros((self.nb_class, self.height, self.width))
-        for class_id in range(self.nb_class):
-            class_mask = np.array(mask == class_id, dtype=np.uint8)
-            label[class_id] = cv2.resize(class_mask, (self.width, self.height))
+        masks = [(mask == v) for v in self.class_values]
+        mask = np.stack(masks, axis=-1).astype('float')
 
-        return image, label
+        return image, mask
 
     def __len__(self):
         return len(self.annotation)
+
+    def preprocess(self, image, mask):
+        return image, mask

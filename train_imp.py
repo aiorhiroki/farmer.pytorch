@@ -27,12 +27,12 @@ class GetAnnotationImp(GetAnnotationABC):
 
 
 def get_model_task():
-    model = smp.DeepLabV3Plus(
-        encoder_name="efficientnet-b7",
-        encoder_weights="imagenet",
-        activation="softmax2d",
+    model = smp.FPN(
+        encoder_name="efficientnet-b5",
+        encoder_weights=None,
+        activation="sigmoid",
         in_channels=3,
-        classes=2,
+        classes=1,
     )
     return model
 
@@ -43,27 +43,40 @@ def get_loss_func_task():
 
 
 def get_metrics_task():
-    metrics = smp.utils.metrics.Fscore(threshold=0.5, ignore_channels=[0])
+    metrics = smp.utils.metrics.Fscore(threshold=0.5)
     return metrics
 
 
 def get_augmentation_task():
-    transforms = [
+    train_transform = [
         albu.augmentations.transforms.HorizontalFlip(p=0.5),
+        albu.ShiftScaleRotate(
+            scale_limit=0.5, rotate_limit=0,
+            shift_limit=0.1, p=1, border_mode=0),
+        albu.RandomCrop(height=320, width=640, always_apply=True),
     ]
 
-    return albu.Compose(transforms)
+    val_transform = [
+        albu.PadIfNeeded(320, 640)
+    ]
+
+    return albu.Compose(train_transform), albu.Compose(val_transform)
 
 
 class DatasetImp(GetDatasetSgmABC):
-    width = 640
-    height = 320
-    nb_class = 2
+    class_values = [1]
+
+    # custom preprocessing
+    def preprocess(self, image, mask):
+        mask[mask == 206] = 1
+        mask[mask == 209] = 1
+        mask[mask > 1] = 0
+        return image, mask
 
     """
     def __getitem__(self, i):
         # you can override getitem function
-        # use variable, self.annotation, self.augmentation, self.width, etc...
+        # use instance/class variable, self.annotation, self.augmentation ...
         return in, out
     """
 
@@ -74,3 +87,8 @@ class GetOptimizationImp(GetOptimizationABC):
     lr = 0.001
     gpu = 0
     optim_obj = torch.optim.Adam
+
+    """
+    def on_epoch_end(self):
+        # set custom callbacks
+    """
