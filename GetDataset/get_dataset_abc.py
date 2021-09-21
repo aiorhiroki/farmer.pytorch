@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-import cv2
+from PIL import Image
 import numpy as np
 from typing import List
 
@@ -14,8 +14,8 @@ class GetDatasetSgmABC(Dataset):
     def __getitem__(self, i):
         img_file, label_file = self.annotation[i]
 
-        image = cv2.imread(str(img_file))
-        mask = cv2.imread(str(label_file), 0)
+        image = np.array(Image.open(str(img_file)))
+        mask = np.array(Image.open(str(label_file)))
 
         # apply augmentations
         if self.augmentation:

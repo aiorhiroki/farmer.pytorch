@@ -21,8 +21,10 @@ def seg_case_first_targets(
     annotations = list()
     for case_name in target_dirs:
         case_dir = Path(annotation_path) / case_name
-        labels = sorted(_get_img_files(case_dir / label_dir))
-        imgs = [case_dir / image_dir / label.name for label in labels]
+        c_label = case_dir / label_dir
+        c_img = case_dir / image_dir
+        labels = sorted(_get_img_files(c_label))
+        imgs = [next(c_img.glob(f"{label.stem}.*")) for label in labels]
         annotations += list(zip(imgs, labels))
     return annotations
 
@@ -48,8 +50,10 @@ def seg_case_first_groups(
     for group_name in group_dirs:
         group_dir = Path(annotation_path) / group_name
         for case_dir in group_dir.iterdir():
-            labels = sorted(_get_img_files(case_dir / label_dir))
-            imgs = [case_dir / image_dir / label.name for label in labels]
+            c_label = case_dir / label_dir
+            c_img = case_dir / image_dir
+            labels = sorted(_get_img_files(c_label))
+            imgs = [next(c_img.glob(f"{label.stem}.*")) for label in labels]
             annotations += list(zip(imgs, labels))
     return annotations
 
