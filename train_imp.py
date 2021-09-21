@@ -5,6 +5,7 @@ from GetOptimization import GetOptimizationABC
 import segmentation_models_pytorch as smp
 import albumentations as albu
 import torch
+import cv2
 
 
 class GetAnnotationImp(GetAnnotationABC):
@@ -28,8 +29,8 @@ class GetAnnotationImp(GetAnnotationABC):
 
 def get_model_task():
     model = smp.FPN(
-        encoder_name="efficientnet-b5",
-        encoder_weights=None,
+        encoder_name="efficientnet-b7",
+        encoder_weights="imagenet",
         activation="sigmoid",
         in_channels=3,
         classes=1,
@@ -50,14 +51,10 @@ def get_metrics_task():
 def get_augmentation_task():
     train_transform = [
         albu.augmentations.transforms.HorizontalFlip(p=0.5),
-        albu.ShiftScaleRotate(
-            scale_limit=0.5, rotate_limit=0,
-            shift_limit=0.1, p=1, border_mode=0),
-        albu.RandomCrop(height=320, width=640, always_apply=True),
     ]
 
     val_transform = [
-        albu.PadIfNeeded(736, 1280)
+        albu.PadIfNeeded(352, 640)
     ]
 
     return albu.Compose(train_transform), albu.Compose(val_transform)
@@ -68,9 +65,13 @@ class DatasetImp(GetDatasetSgmABC):
 
     # custom preprocessing
     def preprocess(self, image, mask):
+        width = 640
+        height = 352
         mask[mask == 206] = 1
         mask[mask == 209] = 1
         mask[mask > 1] = 0
+        mask = cv2.resize(mask, (width, height))
+        image = cv2.resize(image, (width, height))
         return image, mask
 
     """
@@ -82,8 +83,8 @@ class DatasetImp(GetDatasetSgmABC):
 
 
 class GetOptimizationImp(GetOptimizationABC):
-    batch_size = 4
-    epochs = 16
+    batch_size = 2
+    epochs = 50
     lr = 0.001
     gpu = 0
     optim_obj = torch.optim.Adam
