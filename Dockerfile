@@ -1,7 +1,9 @@
 FROM pytorch/pytorch:1.9.0-cuda10.2-cudnn7-runtime
 
 RUN apt-get update
-RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 libgl1-mesa-dev
+RUN apt-get install -y \
+    libglib2.0-0 libsm6 libxrender1 libxext6 libgl1-mesa-dev \
+    git vim
 
 RUN pip install --upgrade pip
 RUN pip install poetry
