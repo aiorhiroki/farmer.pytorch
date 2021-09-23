@@ -8,20 +8,6 @@ import torch
 import cv2
 
 
-def command():
-    train_anno, val_anno = GetAnnotationImp()()  # アノテーションファイル取得
-
-    model = get_model_task()  # モデル構築
-    loss_func = get_loss_func_task()  # 損失関数
-    metrics = get_metrics_task()  # 評価指標
-    train_aug, val_aug = get_augmentation_task()  # データ拡張方法の定義
-    # データ読み込み・前処理
-    train_dataset = DatasetImp(train_anno, train_aug)
-    val_dataset = DatasetImp(val_anno, val_aug)
-    # 学習
-    GetOptimizationImp(model, loss_func, metrics, train_dataset, val_dataset)()
-
-
 class GetAnnotationImp(GetAnnotationABC):
     target = "./seg_data"
 
@@ -76,7 +62,7 @@ def get_augmentation_task():
 
 
 class DatasetImp(GetDatasetSgmABC):
-    class_values = [100]
+    class_values = [8]
 
     # custom preprocessing
     def preprocess(self, image, mask):
@@ -105,6 +91,20 @@ class GetOptimizationImp(GetOptimizationABC):
     def on_epoch_end(self):
         # set custom callbacks
     """
+
+
+def command():
+    train_anno, val_anno = GetAnnotationImp()()  # アノテーションファイル取得
+
+    model = get_model_task()  # モデル構築
+    loss_func = get_loss_func_task()  # 損失関数
+    metrics = get_metrics_task()  # 評価指標
+    train_aug, val_aug = get_augmentation_task()  # データ拡張方法の定義
+    # データ読み込み・前処理
+    train_dataset = DatasetImp(train_anno, train_aug)
+    val_dataset = DatasetImp(val_anno, val_aug)
+    # 学習
+    GetOptimizationImp(model, loss_func, metrics, train_dataset, val_dataset)()
 
 
 if __name__ == "__main__":
