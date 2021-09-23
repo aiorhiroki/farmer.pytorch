@@ -23,23 +23,15 @@ def command():
 
 
 class GetAnnotationImp(GetAnnotationABC):
-    target = "/data2/annos/segmentation/TLH/positive"
-    img_dir = "movieframe"
-    label_dir = "mask"
+    target = "./seg_data"
 
-    import os
-    val_hospitals = ["0174", "0182", "0184", "0188", "0190", "0201"]
-    all_cases = os.listdir(target)
+    img_dir_train = "train"
+    label_dir_train = "trainannot"
+    get_train_fn = get_annotation_fn.seg_case_direct
 
-    val_dirs = list()
-    for case in all_cases:
-        if case[:4] in val_hospitals:
-            val_dirs.append(case)
-
-    train_dirs = list(set(all_cases) - set(val_dirs))
-
-    get_train_fn = get_annotation_fn.seg_case_first_targets
-    get_val_fn = get_annotation_fn.seg_case_first_targets
+    img_dir_val = "val"
+    label_dir_val = "valannot"
+    get_val_fn = get_annotation_fn.seg_case_direct
 
     """
     @classmethod
