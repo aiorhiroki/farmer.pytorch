@@ -1,6 +1,6 @@
-from GetAnnotation import GetAnnotationABC, get_annotation_fn
-from GetDataset import GetDatasetSgmABC
-from GetOptimization import GetOptimizationABC
+from farmer_pytorch.GetAnnotation import GetAnnotationABC, get_annotation_fn
+from farmer_pytorch.GetDataset import GetDatasetSgmABC
+from farmer_pytorch.GetOptimization import GetOptimizationABC
 
 import segmentation_models_pytorch as smp
 import albumentations as albu
@@ -9,7 +9,7 @@ import cv2
 
 
 class GetAnnotationImp(GetAnnotationABC):
-    target = "./seg_data"
+    target = "./seg_data/CamVid"
 
     img_dir_train = "train"
     label_dir_train = "trainannot"

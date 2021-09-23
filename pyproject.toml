@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "farmer.pytorch"
-version = "0.1.0"
+name = "farmer-pytorch"
+version = "0.1.1"
 license = "MIT"
 repository = "https://github.com/aiorhiroki/farmer.pytorch"
 homepage = "https://github.com/aiorhiroki/farmer.pytorch"

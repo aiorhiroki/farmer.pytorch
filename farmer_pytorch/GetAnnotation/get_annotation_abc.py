@@ -7,13 +7,13 @@ class GetAnnotationABC:
     # for train annotation
     img_dir_train: str
     label_dir_train: str
-    train_dirs: List[str]
+    train_dirs: List[str] = None
     get_train_fn: Callable[[str, str, str, List[str]], List[List[str]]]
 
     # for val annotation
     img_dir_val: str
     label_dir_val: str
-    val_dirs: List[str]
+    val_dirs: List[str] = None
     get_val_fn: Callable[[str, str, str, List[str]], List[List[str]]]
 
     @classmethod

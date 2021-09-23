@@ -6,7 +6,8 @@ from pathlib import Path
 def seg_case_direct(
       root: str,
       image_dir: str,
-      label_dir: str
+      label_dir: str,
+      *args
       ) -> List[List[Path]]:
 
     """
@@ -16,8 +17,7 @@ def seg_case_direct(
     """
 
     annotations = list()
-    case_dir = Path(root)
-    c_label, c_img = case_dir / label_dir, case_dir / image_dir
+    c_label, c_img = Path(root) / label_dir, Path(root) / image_dir
     labels = sorted(_get_img_files(c_label))
     imgs = [next(c_img.glob(f"{label.stem}.*")) for label in labels]
     annotations = list(zip(imgs, labels))

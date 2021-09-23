@@ -3,4 +3,5 @@
 __pycache__/
 *.pth
 *.out
+dist/
 quickstart/seg_data

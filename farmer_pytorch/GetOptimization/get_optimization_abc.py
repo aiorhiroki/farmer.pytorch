@@ -1,4 +1,5 @@
 import torch
+from pathlib import Path
 from .get_optimization_fn import get_prog_bar
 
 
@@ -30,6 +31,9 @@ class GetOptimizationABC:
 
         self.optimizer = self.optim_obj(
             [dict(params=self.model.parameters(), lr=self.lr)])
+
+        save_model_dir = Path("./models")
+        save_model_dir.mkdir(exist_ok=True)
 
         for epoch in range(self.epochs):
             print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
@@ -75,7 +79,7 @@ class GetOptimizationABC:
                     cout += f" val_dice: {(validation_dice / i):.5g}"
                     print("\r"+cout, end="")
 
-            model_path = f'models/model_epoch{epoch}.pth'
+            model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
             torch.save(self.model.state_dict(), model_path)
 
             self.on_epoch_end()  # custom callbacks
