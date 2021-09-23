@@ -1,6 +1,10 @@
 # quick start
 
-## Segmentation
+## Prerequisite
+
+[install poetry](https://python-poetry.org/docs/#installation)
+
+## Segmentation Example
 
 ### download dataset
 ```
