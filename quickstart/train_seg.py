@@ -8,15 +8,38 @@ import torch
 import cv2
 
 
+def command():
+    train_anno, val_anno = GetAnnotationImp()()  # アノテーションファイル取得
+
+    model = get_model_task()  # モデル構築
+    loss_func = get_loss_func_task()  # 損失関数
+    metrics = get_metrics_task()  # 評価指標
+    train_aug, val_aug = get_augmentation_task()  # データ拡張方法の定義
+    # データ読み込み・前処理
+    train_dataset = DatasetImp(train_anno, train_aug)
+    val_dataset = DatasetImp(val_anno, val_aug)
+    # 学習
+    GetOptimizationImp(model, loss_func, metrics, train_dataset, val_dataset)()
+
+
 class GetAnnotationImp(GetAnnotationABC):
-    target = "/mnt/cloudy_z/src/yishikawa/input/"
-    target += "Images/Ureter/train_test_cross_val/external/positive"
+    target = "/data2/annos/segmentation/TLH/positive"
     img_dir = "movieframe"
-    label_dir = "label"
-    train_dirs = ["cv1"]
-    val_dirs = ["cv2"]
-    get_train_fn = get_annotation_fn.seg_case_first_groups
-    get_val_fn = get_annotation_fn.seg_case_first_groups
+    label_dir = "mask"
+
+    import os
+    val_hospitals = ["0174", "0182", "0184", "0188", "0190", "0201"]
+    all_cases = os.listdir(target)
+
+    val_dirs = list()
+    for case in all_cases:
+        if case[:4] in val_hospitals:
+            val_dirs.append(case)
+
+    train_dirs = list(set(all_cases) - set(val_dirs))
+
+    get_train_fn = get_annotation_fn.seg_case_first_targets
+    get_val_fn = get_annotation_fn.seg_case_first_targets
 
     """
     @classmethod
@@ -54,22 +77,19 @@ def get_augmentation_task():
     ]
 
     val_transform = [
-        albu.PadIfNeeded(352, 640)
+        albu.PadIfNeeded(256, 512)
     ]
 
     return albu.Compose(train_transform), albu.Compose(val_transform)
 
 
 class DatasetImp(GetDatasetSgmABC):
-    class_values = [1]
+    class_values = [100]
 
     # custom preprocessing
     def preprocess(self, image, mask):
-        width = 640
-        height = 352
-        mask[mask == 206] = 1
-        mask[mask == 209] = 1
-        mask[mask > 1] = 0
+        width = 512
+        height = 256
         mask = cv2.resize(mask, (width, height))
         image = cv2.resize(image, (width, height))
         return image, mask
@@ -83,7 +103,7 @@ class DatasetImp(GetDatasetSgmABC):
 
 
 class GetOptimizationImp(GetOptimizationABC):
-    batch_size = 2
+    batch_size = 8
     epochs = 50
     lr = 0.001
     gpu = 0
@@ -93,3 +113,7 @@ class GetOptimizationImp(GetOptimizationABC):
     def on_epoch_end(self):
         # set custom callbacks
     """
+
+
+if __name__ == "__main__":
+    command()
