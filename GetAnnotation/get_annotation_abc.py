@@ -18,14 +18,17 @@ class GetAnnotationABC:
 
     @classmethod
     def __call__(cls):
-        train_set = cls.get_train_fn(
-            cls.target, cls.img_dir_train, cls.label_dir_train, cls.train_dirs
-        )
-        validation_set = cls.get_val_fn(
-            cls.target, cls.img_dir_val, cls.label_dir_val, cls.val_dirs
-        )
-        print("completed")
-        return train_set, validation_set
+        return cls.get_train_annotations(), cls.get_val_annotations()
+
+    @classmethod
+    def get_train_annotations(cls):
+        return cls.get_train_fn(
+            cls.target, cls.img_dir_train, cls.label_dir_train, cls.train_dirs)
+
+    @classmethod
+    def get_val_annotations(cls):
+        return cls.get_val_fn(
+            cls.target, cls.img_dir_val, cls.label_dir_val, cls.val_dirs)
 
     def __init__(self):
-        print("get annotation..."+" "*10, end="")
+        print("get annotation...")
