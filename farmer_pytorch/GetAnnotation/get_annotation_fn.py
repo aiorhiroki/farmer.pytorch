@@ -26,19 +26,40 @@ def seg_case_direct(
     return annotations
 
 
-def seg_case_groups(
+def seg_case_first_targets(
       root: str,
       image_dir: str,
       label_dir: str,
-      group_dirs: List[str],
-      depth: int = 1
+      target_dirs: List[str]
+      ) -> List[List[Path]]:
+
+    """
+    caseごとにフォルダが作成されている場合
+    - root
+        - case_name
+            - image_dir
+            - label_dir
+    target_dirs: [case_name1, case_name2, ...]
+    """
+    annos = list()
+    for case_name in target_dirs:
+        case_dir = Path(root) / case_name
+        annos += seg_case_direct(str(case_dir), image_dir, label_dir)
+    return annos
+
+
+def seg_case_first_groups(
+      root: str,
+      image_dir: str,
+      label_dir: str,
+      group_dirs: List[str]
       ) -> List[List[Path]]:
 
     """
     caseごとのフォルダをさらにグループでまとめている場合
     - root
-        - group_dirs_depth1
-            - group_dirs_depth2
+        - group_name
+            - case_name
                 - image_dir
                 - label_dir
     group_dirs: [group_name1, group_name2, ...]
@@ -46,12 +67,9 @@ def seg_case_groups(
 
     annos = list()
     for group_name in group_dirs:
-        group_dir1 = Path(root) / group_name
-        if depth == 1:
-            annos += seg_case_direct(str(group_dir1), image_dir, label_dir)
-        elif depth == 2:
-            for group_dir2 in group_dir1.iterdir():
-                annos += seg_case_direct(str(group_dir2), image_dir, label_dir)
+        group_dir = Path(root) / group_name
+        for case_dir in group_dir.iterdir():
+            annos += seg_case_direct(str(case_dir), image_dir, label_dir)
     return annos
 
 
