@@ -5,6 +5,7 @@ from farmer_pytorch.GetOptimization import GetOptimizationABC
 import segmentation_models_pytorch as smp
 import albumentations as albu
 import torch
+import numpy as np
 import cv2
 
 
@@ -82,7 +83,7 @@ class DatasetImp(GetDatasetSgmABC):
 
 class GetOptimizationImp(GetOptimizationABC):
     batch_size = 8
-    epochs = 50
+    epochs = 10
     lr = 0.001
     gpu = 0
     optim_obj = torch.optim.Adam
@@ -94,17 +95,27 @@ class GetOptimizationImp(GetOptimizationABC):
 
 
 def command():
-    train_anno, val_anno = GetAnnotationImp()()  # アノテーションファイル取得
+    mean_dice = list()
+    cv_fold = 5
+    for cv_i in range(cv_fold):
 
-    model = get_model_task()  # モデル構築
-    loss_func = get_loss_func_task()  # 損失関数
-    metrics = get_metrics_task()  # 評価指標
-    train_aug, val_aug = get_augmentation_task()  # データ拡張方法の定義
-    # データ読み込み・前処理
-    train_dataset = DatasetImp(train_anno, train_aug)
-    val_dataset = DatasetImp(val_anno, val_aug)
-    # 学習
-    GetOptimizationImp(model, loss_func, metrics, train_dataset, val_dataset)()
+        # アノテーションファイル取得
+        train_anno, val_anno = GetAnnotationImp()(cv_fold, cv_i)
+        # モデル構築
+        model = get_model_task()
+        # 損失関数
+        loss_fn = get_loss_func_task()
+        # 評価指標
+        metrics = get_metrics_task()
+        # データ拡張方法の定義
+        train_aug, val_aug = get_augmentation_task()
+        # データ読み込み・前処理
+        train_data = DatasetImp(train_anno, train_aug)
+        val_data = DatasetImp(val_anno, val_aug)
+        # 学習
+        d = GetOptimizationImp(model, loss_fn, metrics, train_data, val_data)()
+        mean_dice.append(d)
+    print("mean_dice: ", np.mean(mean_dice))
 
 
 if __name__ == "__main__":

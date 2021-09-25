@@ -27,7 +27,7 @@ class GetOptimizationABC:
         device = torch.device(
             f"cuda:{self.gpu}" if torch.cuda.is_available() else "cpu")
         print(device)
-        self.model.cuda()
+        self.model.to(device)
 
         self.optimizer = self.optim_obj(
             [dict(params=self.model.parameters(), lr=self.lr)])
@@ -64,19 +64,20 @@ class GetOptimizationABC:
             # validation step
             print("\nvalidation step")
             self.model.eval()
-            validation_loss, validation_dice = 0, 0
+            total_loss, total_dice = 0, 0
             with torch.no_grad():
                 nb_iters = len(valid_loader.dataset) // self.batch_size + 1
                 for i, data in enumerate(valid_loader, 1):
                     inputs, labels = data
                     inputs, labels = inputs.to(device), labels.to(device)
                     outputs = self.model(inputs)
-                    validation_loss += self.loss_func(outputs, labels).item()
-                    validation_dice += self.metrics(outputs, labels).item()
+                    total_loss += self.loss_func(outputs, labels).item()
+                    total_dice += self.metrics(outputs, labels).item()
 
                     cout = get_prog_bar(i, nb_iters)
-                    cout += f" val_loss: {(validation_loss / i):.5g}"
-                    cout += f" val_dice: {(validation_dice / i):.5g}"
+                    val_loss, val_dice = total_loss / i, total_dice / i
+                    cout += f" val_loss: {val_loss:.5g}"
+                    cout += f" val_dice: {val_dice:.5g}"
                     print("\r"+cout, end="")
 
             model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
@@ -85,6 +86,7 @@ class GetOptimizationABC:
             self.on_epoch_end()  # custom callbacks
 
         print('\nFinished Training')
+        return val_dice
 
     def on_epoch_end(self):
         pass
