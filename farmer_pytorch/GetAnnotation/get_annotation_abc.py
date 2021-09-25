@@ -1,4 +1,5 @@
 from typing import List, Callable
+from .get_annotation_fn import crossval
 
 
 class GetAnnotationABC:
@@ -14,11 +15,14 @@ class GetAnnotationABC:
     img_dir_val: str
     label_dir_val: str
     val_dirs: List[str] = None
-    get_val_fn: Callable[[str, str, str, List[str]], List[List[str]]]
+    get_val_fn: Callable[[str, str, str, List[str]], List[List[str]]] = None
 
     @classmethod
-    def __call__(cls):
-        return cls.get_train_annotations(), cls.get_val_annotations()
+    def __call__(cls, cv_fold: int = None, cv_i=0, depth=0):
+        if cv_fold:
+            return crossval(cls.get_train_annotations(), cv_fold, cv_i, depth)
+        else:
+            return cls.get_train_annotations(), cls.get_val_annotations()
 
     @classmethod
     def get_train_annotations(cls):
