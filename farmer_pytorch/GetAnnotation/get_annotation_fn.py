@@ -83,7 +83,7 @@ def _get_img_files(p_dir: Path) -> List[Path]:
 
 def crossval(annos: List[List[Path]], cv_fold, cv_i, depth):
     if depth == 0:
-        nb_val = list(annos) // cv_fold
+        nb_val = len(annos) // cv_fold
         train_annos = annos[:nb_val*cv_i] + annos[nb_val*(cv_i+1):]
         val_annos = annos[nb_val*cv_i:nb_val*(cv_i+1)]
     else:

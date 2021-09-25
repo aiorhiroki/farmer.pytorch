@@ -20,6 +20,7 @@ class GetAnnotationABC:
     @classmethod
     def __call__(cls, cv_fold: int = None, cv_i=0, depth=0):
         if cv_fold:
+            print(f"cross_val: {cv_i+1}/{cv_fold}")
             return crossval(cls.get_train_annotations(), cv_fold, cv_i, depth)
         else:
             return cls.get_train_annotations(), cls.get_val_annotations()
