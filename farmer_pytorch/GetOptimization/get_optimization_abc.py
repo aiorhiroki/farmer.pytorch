@@ -27,7 +27,7 @@ class GetOptimizationABC:
         device = torch.device(
             f"cuda:{self.gpu}" if torch.cuda.is_available() else "cpu")
         print(device)
-        self.model.cuda()
+        self.model.to(device)
 
         self.optimizer = self.optim_obj(
             [dict(params=self.model.parameters(), lr=self.lr)])

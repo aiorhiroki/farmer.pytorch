@@ -89,13 +89,17 @@ def crossval(annos: List[List[Path]], cv_fold, cv_i, depth):
     else:
         group_names = list()
         for img_file, _ in annos:
-            for _ in range(depth):
+            for _ in range(depth+1):
                 img_file = img_file.parent
             group_names.append(img_file.stem)
         group_counter = collections.Counter(group_names)
         cross_val_dirs = _cross_val_split(group_counter, cv_fold)
         val_dirs = cross_val_dirs[cv_i]
-        train_dirs = cross_val_dirs[:cv_i] + cross_val_dirs[cv_i+1:]
+        train_dirs = list()
+        for val_i in range(cv_fold):
+            if val_i == cv_i:
+                continue
+            train_dirs += cross_val_dirs[val_i]
         train_annos = [
             anno for anno, group_name in zip(annos, group_names)
             if group_name in train_dirs

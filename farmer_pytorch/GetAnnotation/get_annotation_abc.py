@@ -12,8 +12,8 @@ class GetAnnotationABC:
     get_train_fn: Callable[[str, str, str, List[str]], List[List[str]]]
 
     # for val annotation
-    img_dir_val: str
-    label_dir_val: str
+    img_dir_val: str = None
+    label_dir_val: str = None
     val_dirs: List[str] = None
     get_val_fn: Callable[[str, str, str, List[str]], List[List[str]]] = None
 
@@ -34,6 +34,3 @@ class GetAnnotationABC:
     def get_val_annotations(cls):
         return cls.get_val_fn(
             cls.target, cls.img_dir_val, cls.label_dir_val, cls.val_dirs)
-
-    def __init__(self):
-        print("get annotation...")
