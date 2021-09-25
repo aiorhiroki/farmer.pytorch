@@ -5,6 +5,7 @@ from farmer_pytorch.GetOptimization import GetOptimizationABC
 import segmentation_models_pytorch as smp
 import albumentations as albu
 import torch
+import numpy as np
 import cv2
 
 
@@ -94,6 +95,7 @@ class GetOptimizationImp(GetOptimizationABC):
 
 
 def command():
+    mean_dice = list()
     cv_fold = 5
     for cv_i in range(cv_fold):
 
@@ -102,7 +104,7 @@ def command():
         # モデル構築
         model = get_model_task()
         # 損失関数
-        loss_func = get_loss_func_task()
+        loss_fn = get_loss_func_task()
         # 評価指標
         metrics = get_metrics_task()
         # データ拡張方法の定義
@@ -111,7 +113,9 @@ def command():
         train_data = DatasetImp(train_anno, train_aug)
         val_data = DatasetImp(val_anno, val_aug)
         # 学習
-        GetOptimizationImp(model, loss_func, metrics, train_data, val_data)()
+        d = GetOptimizationImp(model, loss_fn, metrics, train_data, val_data)()
+        mean_dice.append(d)
+    print("mean_dice: ", np.mean(mean_dice))
 
 
 if __name__ == "__main__":
