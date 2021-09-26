@@ -20,6 +20,8 @@ class GetAnnotationImp(GetAnnotationABC):
     label_dir_val = "valannot"
     get_val_fn = get_annotation_fn.seg_case_direct
 
+    cv_fold = 5
+
     """
     @classmethod
     def __call__(cls):
@@ -96,11 +98,11 @@ class GetOptimizationImp(GetOptimizationABC):
 
 def command():
     mean_dice = list()
-    cv_fold = 5
-    for cv_i in range(cv_fold):
+    # アノテーションファイル取得
+    train_annos, val_annos = GetAnnotationImp()()
+    for i, (train_anno, val_anno) in enumerate(zip(train_annos, val_annos), 1):
+        print(f"trial: {i}/{len(train_annos)}")
 
-        # アノテーションファイル取得
-        train_anno, val_anno = GetAnnotationImp()(cv_fold, cv_i)
         # モデル構築
         model = get_model_task()
         # 損失関数
@@ -114,6 +116,7 @@ def command():
         val_data = DatasetImp(val_anno, val_aug)
         # 学習
         d = GetOptimizationImp(model, loss_fn, metrics, train_data, val_data)()
+
         mean_dice.append(d)
     print("mean_dice: ", np.mean(mean_dice))
 
