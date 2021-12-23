@@ -17,20 +17,23 @@ class GetAnnotationABC:
     val_dirs: List[str] = None
     get_val_fn: Callable[[str, str, str, List[str]], List[List[str]]] = None
 
-    @classmethod
-    def __call__(cls, cv_fold: int = None, cv_i=0, depth=0):
-        if cv_fold:
-            print(f"cross_val: {cv_i+1}/{cv_fold}")
-            return crossval(cls.get_train_annotations(), cv_fold, cv_i, depth)
-        else:
-            return cls.get_train_annotations(), cls.get_val_annotations()
+    # for cross validation
+    cv_fold: int = None
+    depth: int = 0
 
     @classmethod
-    def get_train_annotations(cls):
+    def __call__(cls):
+        if cls.cv_fold:
+            return crossval(cls.get_train_annos(), cls.cv_fold, cls.depth)
+        else:
+            return [cls.get_train_annos()], [cls.get_val_annos()]
+
+    @classmethod
+    def get_train_annos(cls):
         return cls.get_train_fn(
             cls.target, cls.img_dir_train, cls.label_dir_train, cls.train_dirs)
 
     @classmethod
-    def get_val_annotations(cls):
+    def get_val_annos(cls):
         return cls.get_val_fn(
             cls.target, cls.img_dir_val, cls.label_dir_val, cls.val_dirs)
