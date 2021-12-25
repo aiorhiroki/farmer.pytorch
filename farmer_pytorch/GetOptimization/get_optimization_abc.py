@@ -1,6 +1,6 @@
 import torch
 from pathlib import Path
-from .get_optimization_fn import get_prog_bar
+from .get_optimization_fn import get_prog_bar, plot_metrics
 
 
 class GetOptimizationABC:
@@ -16,6 +16,7 @@ class GetOptimizationABC:
         self.metrics = metrics
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
+        self.logs = {}
 
     def __call__(self):
 
@@ -35,6 +36,9 @@ class GetOptimizationABC:
         save_model_dir = Path("./models")
         save_model_dir.mkdir(exist_ok=True)
 
+        # set monitor metrics
+        self.logs["val_dice"] = list()
+
         for epoch in range(self.epochs):
             print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
             self.model.train()
@@ -44,7 +48,6 @@ class GetOptimizationABC:
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
                 inputs, labels = inputs.to(device), labels.to(device)
-
                 outputs = self.model(inputs)
                 loss = self.loss_func(outputs, labels)
 
@@ -76,9 +79,10 @@ class GetOptimizationABC:
 
                     cout = get_prog_bar(i, nb_iters)
                     val_loss, val_dice = total_loss / i, total_dice / i
-                    cout += f" val_loss: {val_loss:.5g}"
-                    cout += f" val_dice: {val_dice:.5g}"
+                    cout += f" val_loss: {val_loss:.5g} val_dice: {val_dice:.5g}"
                     print("\r"+cout, end="")
+                    self.logs["val_dice"] += [val_dice]
+                    plot_metrics(self.logs)
 
             model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
             torch.save(self.model.state_dict(), model_path)
