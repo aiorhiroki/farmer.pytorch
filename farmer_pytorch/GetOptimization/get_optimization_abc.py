@@ -19,7 +19,6 @@ class GetOptimizationABC:
         self.logs = {}
 
     def __call__(self):
-
         train_loader = torch.utils.data.DataLoader(
             self.train_dataset, batch_size=self.batch_size, shuffle=True)
         valid_loader = torch.utils.data.DataLoader(
@@ -40,56 +39,64 @@ class GetOptimizationABC:
         self.logs["val_dice"] = list()
 
         for epoch in range(self.epochs):
-            print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
-            self.model.train()
-            training_loss, training_dice = 0, 0
-            nb_iters = len(train_loader.dataset) // self.batch_size + 1
-            for i, data in enumerate(train_loader, 1):
-                # get the inputs; data is a list of [inputs, labels]
-                inputs, labels = data
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = self.model(inputs)
-                loss = self.loss_func(outputs, labels)
-
-                # zero the parameter gradients
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-
-                # print statistics
-                training_loss += loss.item()
-                training_dice += self.metrics(outputs, labels).item()
-                cout = get_prog_bar(i, nb_iters)
-                cout += f" loss: {(training_loss / i):.5g}"
-                cout += f" dice: {(training_dice / i):.5g}"
-                print("\r"+cout, end="")
-
+            # train step
+            self.train(train_loader, device, epoch)
             # validation step
-            print("\nvalidation step")
-            self.model.eval()
-            total_loss, total_dice = 0, 0
-            with torch.no_grad():
-                nb_iters = len(valid_loader.dataset) // self.batch_size + 1
-                for i, data in enumerate(valid_loader, 1):
-                    inputs, labels = data
-                    inputs, labels = inputs.to(device), labels.to(device)
-                    outputs = self.model(inputs)
-                    total_loss += self.loss_func(outputs, labels).item()
-                    total_dice += self.metrics(outputs, labels).item()
+            val_dice = self.validation(valid_loader, device)
 
-                    cout = get_prog_bar(i, nb_iters)
-                    val_loss, val_dice = total_loss / i, total_dice / i
-                    cout += f" val_loss: {val_loss:.5g} val_dice: {val_dice:.5g}"
-                    print("\r"+cout, end="")
-                    self.logs["val_dice"] += [val_dice]
-                    plot_metrics(self.logs)
-
+            # save result
             model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
             torch.save(self.model.state_dict(), model_path)
+            self.logs["val_dice"] += [val_dice]
+            plot_metrics(self.logs)
 
             self.on_epoch_end()  # custom callbacks
 
         print('\nFinished Training')
+        return val_dice
+
+    def train(self, train_loader, device, epoch):
+        print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
+        self.model.train()
+        training_loss, training_dice = 0, 0
+        nb_iters = len(train_loader.dataset) // self.batch_size + 1
+        for i, data in enumerate(train_loader, 1):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = self.model(inputs)
+            loss = self.loss_func(outputs, labels)
+
+            # zero the parameter gradients
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            # print statistics
+            training_loss += loss.item()
+            training_dice += self.metrics(outputs, labels).item()
+            cout = get_prog_bar(i, nb_iters)
+            cout += f" loss: {(training_loss / i):.5g}"
+            cout += f" dice: {(training_dice / i):.5g}"
+            print("\r"+cout, end="")
+
+    def validation(self, valid_loader, device):
+        print("\nvalidation step")
+        self.model.eval()
+        total_loss, total_dice = 0, 0
+        with torch.no_grad():
+            nb_iters = len(valid_loader.dataset) // self.batch_size + 1
+            for i, data in enumerate(valid_loader, 1):
+                inputs, labels = data
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = self.model(inputs)
+                total_loss += self.loss_func(outputs, labels).item()
+                total_dice += self.metrics(outputs, labels).item()
+
+                cout = get_prog_bar(i, nb_iters)
+                val_loss, val_dice = total_loss / i, total_dice / i
+                cout += f" val_loss: {val_loss:.5g} val_dice: {val_dice:.5g}"
+                print("\r"+cout, end="")
         return val_dice
 
     def on_epoch_end(self):

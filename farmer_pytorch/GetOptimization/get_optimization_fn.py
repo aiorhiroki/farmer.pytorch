@@ -1,4 +1,4 @@
-import matploblib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 # プログレスバーの作成
@@ -11,7 +11,8 @@ def get_prog_bar(iter_i, iter_total, length=50):
 
 
 # metricsのプロット
-def plot_metrics(logs, save_fig):
+def plot_metrics(logs):
     for metric_name, history in logs.items():
         plt.plot(history)
         plt.savefig(f"{metric_name}.png")
+        plt.close()
