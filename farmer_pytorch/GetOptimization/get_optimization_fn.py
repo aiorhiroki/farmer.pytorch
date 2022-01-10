@@ -15,11 +15,17 @@ class Logger:
         for metric_name in metric_names:
             self.logs[metric_name] = []
 
-    def plot_metrics(self, metrics, metric_name):
+    def get_metrics(self, metric_name: str):
+        return self.logs[metric_name]
+
+    def update_metrics(self, metrics, metric_name):
         self.logs[metric_name] += [metrics]
-        plt.plot(self.logs[metric_name])
-        plt.savefig(f"{metric_name}.png")
-        plt.close()
+
+    def plot_logs(self):
+        for metric_name, history in self.logs.items():
+            plt.plot(history)
+            plt.savefig(f"{metric_name}.png")
+            plt.close()
 
 
 class ProgressBar:

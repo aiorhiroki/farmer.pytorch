@@ -36,21 +36,14 @@ class GetOptimizationABC:
 
         self.logger.set_metrics(["dice"])
         for epoch in range(self.epochs):
-            # train and validation
-            loss, metrics = self.train(train_loader, device, epoch)
-            val_loss, val_metrics = self.validation(valid_loader, device)
-
-            # update metrics plot
-            self.logger.plot_metrics(val_metrics, "dice")
-
-            # save result
+            self.train(train_loader, device, epoch)
+            self.validation(valid_loader, device)
             model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
             torch.save(self.model.state_dict(), model_path)
+            self.logger.plot_logs()
+            self.on_epoch_end()
 
-            self.on_epoch_end()  # custom callbacks
-
-        print('\nFinished Training')
-        return val_metrics
+        return self.logger.get_metrics("dice")
 
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
@@ -65,8 +58,6 @@ class GetOptimizationABC:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-        return loss.item(), metrics.item()
-
 
     def validation(self, valid_loader, device):
         print("\nvalidation step")
@@ -79,7 +70,7 @@ class GetOptimizationABC:
                 loss = self.loss_func(outputs, labels)
                 metrics = self.metrics_func(outputs, labels)
                 self.logger.get_progbar(loss.item(), metrics.item())
-        return loss.item(), metrics.item()
+        self.logger.update_metrics(metrics.item(), "dice")
 
     def on_epoch_end(self):
         pass
