@@ -1,6 +1,6 @@
 import torch
 from pathlib import Path
-from .get_optimization_fn import get_prog_bar, plot_metrics
+from .get_optimization_fn import Logger
 
 
 class GetOptimizationABC:
@@ -10,94 +10,75 @@ class GetOptimizationABC:
     gpu: int
     optim_obj: torch.optim.Optimizer
 
-    def __init__(self, model, loss_func, metrics, train_dataset, val_dataset):
+    def __init__(self, model, loss_func, metrics_func, train_data, val_data):
         self.model = model
         self.loss_func = loss_func
-        self.metrics = metrics
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        self.logs = {}
+        self.metrics_func = metrics_func
+        self.train_data = train_data
+        self.val_data = val_data
+        self.logger = Logger()
 
     def __call__(self):
         train_loader = torch.utils.data.DataLoader(
-            self.train_dataset, batch_size=self.batch_size, shuffle=True)
+            self.train_data, batch_size=self.batch_size, shuffle=True)
         valid_loader = torch.utils.data.DataLoader(
-            self.val_dataset, batch_size=self.batch_size, shuffle=False)
+            self.val_data, batch_size=self.batch_size, shuffle=False)
 
-        device = torch.device(
-            f"cuda:{self.gpu}" if torch.cuda.is_available() else "cpu")
+        device_name = f"cuda:{self.gpu}" if torch.cuda.is_available() else "cpu"
+        device = torch.device(device_name)
         print(device)
         self.model.to(device)
-
         self.optimizer = self.optim_obj(
             [dict(params=self.model.parameters(), lr=self.lr)])
 
         save_model_dir = Path("./models")
         save_model_dir.mkdir(exist_ok=True)
 
-        # set monitor metrics
-        self.logs["val_dice"] = list()
-
+        self.logger.set_metrics(["dice"])
         for epoch in range(self.epochs):
-            # train step
-            self.train(train_loader, device, epoch)
-            # validation step
-            val_dice = self.validation(valid_loader, device)
+            # train and validation
+            loss, metrics = self.train(train_loader, device, epoch)
+            val_loss, val_metrics = self.validation(valid_loader, device)
+
+            # update metrics plot
+            self.logger.plot_metrics(val_metrics, "dice")
 
             # save result
             model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
             torch.save(self.model.state_dict(), model_path)
-            self.logs["val_dice"] += [val_dice]
-            plot_metrics(self.logs)
 
             self.on_epoch_end()  # custom callbacks
 
         print('\nFinished Training')
-        return val_dice
 
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
         self.model.train()
-        training_loss, training_dice = 0, 0
-        nb_iters = len(train_loader.dataset) // self.batch_size + 1
-        for i, data in enumerate(train_loader, 1):
-            # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+        self.logger.set_progbar(len(train_loader))
+        for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = self.model(inputs)
             loss = self.loss_func(outputs, labels)
-
-            # zero the parameter gradients
+            metrics = self.metrics_func(outputs, labels)
+            self.logger.get_progbar(loss.item(), metrics.item())
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+        return loss.item(), metrics.item()
 
-            # print statistics
-            training_loss += loss.item()
-            training_dice += self.metrics(outputs, labels).item()
-            cout = get_prog_bar(i, nb_iters)
-            cout += f" loss: {(training_loss / i):.5g}"
-            cout += f" dice: {(training_dice / i):.5g}"
-            print("\r"+cout, end="")
 
     def validation(self, valid_loader, device):
         print("\nvalidation step")
         self.model.eval()
-        total_loss, total_dice = 0, 0
+        self.logger.set_progbar(len(valid_loader))
         with torch.no_grad():
-            nb_iters = len(valid_loader.dataset) // self.batch_size + 1
-            for i, data in enumerate(valid_loader, 1):
-                inputs, labels = data
+            for inputs, labels in valid_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = self.model(inputs)
-                total_loss += self.loss_func(outputs, labels).item()
-                total_dice += self.metrics(outputs, labels).item()
-
-                cout = get_prog_bar(i, nb_iters)
-                val_loss, val_dice = total_loss / i, total_dice / i
-                cout += f" val_loss: {val_loss:.5g} val_dice: {val_dice:.5g}"
-                print("\r"+cout, end="")
-        return val_dice
+                loss = self.loss_func(outputs, labels)
+                metrics = self.metrics_func(outputs, labels)
+                self.logger.get_progbar(loss.item(), metrics.item())
+        return loss.item(), metrics.item()
 
     def on_epoch_end(self):
         pass
