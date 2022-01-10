@@ -50,6 +50,7 @@ class GetOptimizationABC:
             self.on_epoch_end()  # custom callbacks
 
         print('\nFinished Training')
+        return val_metrics
 
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
