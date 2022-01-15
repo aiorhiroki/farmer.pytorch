@@ -36,4 +36,5 @@ class GetAnnotationABC:
     @classmethod
     def get_val_annos(cls):
         return cls.get_val_fn(
-            cls.target, cls.img_dir_val, cls.label_dir_val, cls.val_dirs)
+            cls.target, cls.img_dir_val or cls.img_dir_train,
+            cls.label_dir_val or cls.label_dir_train, cls.val_dirs)
