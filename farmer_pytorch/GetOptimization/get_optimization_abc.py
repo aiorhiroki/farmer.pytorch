@@ -43,7 +43,7 @@ class GetOptimizationABC:
             self.logger.plot_logs()
             self.on_epoch_end()
 
-        return self.logger.get_metrics("dice")
+        return self.logger.get_latest_metrics()
 
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
@@ -70,7 +70,7 @@ class GetOptimizationABC:
                 loss = self.loss_func(outputs, labels)
                 metrics = self.metrics_func(outputs, labels)
                 self.logger.get_progbar(loss.item(), metrics.item())
-        self.logger.update_metrics(metrics.item(), "dice")
+        self.logger.update_metrics()
 
     def on_epoch_end(self):
         pass

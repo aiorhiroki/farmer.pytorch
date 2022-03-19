@@ -9,7 +9,7 @@ class GetAnnotationABC:
     img_dir_train: str
     label_dir_train: str
     train_dirs: List[str] = []
-    get_train_fn: Callable[[str, str, str, List[str]], List[List[str]]]
+    get_train_fn: Callable[[str, str, str, List[str]], List[List[str]]] = None
 
     # for val annotation
     img_dir_val: str = None
@@ -24,10 +24,11 @@ class GetAnnotationABC:
     @classmethod
     def __call__(cls):
         if cls.cv_fold:
-            return crossval(cls.get_train_annos(), cls.cv_fold, cls.depth)
+            return crossval(cls.get_train_anno(), cls.cv_fold, cls.depth)
         else:
-            return (None if len(cls.val_dirs) == 0 else cls.get_val_anno(),
-                    None if len(cls.train_dirs) == 0 else cls.get_train_anno())
+            return (
+                None if cls.get_train_fn is None else [cls.get_train_anno()],
+                None if cls.get_val_fn is None else [cls.get_val_anno()])
 
     @classmethod
     def get_train_anno(cls):

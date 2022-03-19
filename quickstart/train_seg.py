@@ -20,7 +20,7 @@ class GetAnnotationImp(GetAnnotationABC):
     label_dir_val = "valannot"
     get_val_fn = get_annotation_fn.seg_case_direct
 
-    cv_fold = 5
+    # cv_fold = 5
 
     """
     @classmethod
@@ -84,7 +84,7 @@ class DatasetImp(GetDatasetSgmABC):
 
 
 class GetOptimizationImp(GetOptimizationABC):
-    batch_size = 8
+    batch_size = 16
     epochs = 10
     lr = 0.001
     gpu = 0
@@ -118,7 +118,7 @@ def command():
         d = GetOptimizationImp(model, loss_fn, metrics, train_data, val_data)()
 
         mean_dice.append(d)
-    print("mean_dice: ", np.mean(mean_dice))
+    print("\n mean_dice: ", np.mean(mean_dice))
 
 
 if __name__ == "__main__":
