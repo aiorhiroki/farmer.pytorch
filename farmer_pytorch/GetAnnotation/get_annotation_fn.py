@@ -26,7 +26,7 @@ def seg_case_direct(
     return annotations
 
 
-def seg_case_first_targets(
+def seg_cases(
       root: str,
       image_dir: str,
       label_dir: str,
@@ -48,7 +48,7 @@ def seg_case_first_targets(
     return annos
 
 
-def seg_case_first_groups(
+def seg_case_groups(
       root: str,
       image_dir: str,
       label_dir: str,

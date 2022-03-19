@@ -8,13 +8,13 @@ class GetAnnotationABC:
     # for train annotation
     img_dir_train: str
     label_dir_train: str
-    train_dirs: List[str] = None
+    train_dirs: List[str] = []
     get_train_fn: Callable[[str, str, str, List[str]], List[List[str]]]
 
     # for val annotation
     img_dir_val: str = None
     label_dir_val: str = None
-    val_dirs: List[str] = None
+    val_dirs: List[str] = []
     get_val_fn: Callable[[str, str, str, List[str]], List[List[str]]] = None
 
     # for cross validation
@@ -26,14 +26,16 @@ class GetAnnotationABC:
         if cls.cv_fold:
             return crossval(cls.get_train_annos(), cls.cv_fold, cls.depth)
         else:
-            return [cls.get_train_annos()], [cls.get_val_annos()]
+            return (None if len(cls.val_dirs) == 0 else cls.get_val_anno(),
+                    None if len(cls.train_dirs) == 0 else cls.get_train_anno())
 
     @classmethod
-    def get_train_annos(cls):
+    def get_train_anno(cls):
         return cls.get_train_fn(
             cls.target, cls.img_dir_train, cls.label_dir_train, cls.train_dirs)
 
     @classmethod
-    def get_val_annos(cls):
+    def get_val_anno(cls):
         return cls.get_val_fn(
-            cls.target, cls.img_dir_val, cls.label_dir_val, cls.val_dirs)
+            cls.target, cls.img_dir_val or cls.img_dir_train,
+            cls.label_dir_val or cls.label_dir_train, cls.val_dirs)
