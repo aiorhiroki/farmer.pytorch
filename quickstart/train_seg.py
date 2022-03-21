@@ -1,12 +1,11 @@
 from farmer_pytorch.GetAnnotation import GetAnnotationABC, get_annotation_fn
 from farmer_pytorch.GetDataset import GetDatasetSgmABC
-from farmer_pytorch.GetOptimization import GetOptimizationABC
+from farmer_pytorch.GetOptimization import GetOptimizationABC, optimization_fn
 
 import segmentation_models_pytorch as smp
 import albumentations as albu
 import torch
 import numpy as np
-import cv2
 
 
 class GetAnnotationImp(GetAnnotationABC):
@@ -48,17 +47,21 @@ def get_loss_func_task():
 
 
 def get_metrics_task():
-    metrics = smp.utils.metrics.Fscore(threshold=0.5)
-    return metrics
+    # metric_func = smp.utils.metrics.Fscore  # batch wise calculation
+    # metric_kargs = dict(threshold=0.5)
+    metric_func = optimization_fn.Fscore  # dataset wise calculation
+    metric_kargs = {}
+    return metric_func, metric_kargs
 
 
 def get_augmentation_task():
     train_transform = [
+        albu.augmentations.geometric.resize.Resize(256, 512),
         albu.augmentations.transforms.HorizontalFlip(p=0.5),
     ]
 
     val_transform = [
-        albu.PadIfNeeded(256, 512)
+        albu.augmentations.geometric.resize.Resize(256, 512),
     ]
 
     return albu.Compose(train_transform), albu.Compose(val_transform)
@@ -67,13 +70,10 @@ def get_augmentation_task():
 class DatasetImp(GetDatasetSgmABC):
     class_values = [8]
 
-    # custom preprocessing
+    """
     def preprocess(self, image, mask):
-        width = 512
-        height = 256
-        mask = cv2.resize(mask, (width, height))
-        image = cv2.resize(image, (width, height))
-        return image, mask
+        # custom preprocessing
+    """
 
     """
     def __getitem__(self, i):
