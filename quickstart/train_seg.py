@@ -1,12 +1,11 @@
 from farmer_pytorch.GetAnnotation import GetAnnotationABC, get_annotation_fn
 from farmer_pytorch.GetDataset import GetDatasetSgmABC
-from farmer_pytorch.GetOptimization import GetOptimizationABC
+from farmer_pytorch.GetOptimization import GetOptimizationABC, optimization_fn
 
 import segmentation_models_pytorch as smp
 import albumentations as albu
 import torch
 import numpy as np
-import cv2
 
 
 class GetAnnotationImp(GetAnnotationABC):
@@ -19,6 +18,8 @@ class GetAnnotationImp(GetAnnotationABC):
     img_dir_val = "val"
     label_dir_val = "valannot"
     get_val_fn = get_annotation_fn.seg_case_direct
+
+    # cv_fold = 5
 
     """
     @classmethod
@@ -46,17 +47,21 @@ def get_loss_func_task():
 
 
 def get_metrics_task():
-    metrics = smp.utils.metrics.Fscore(threshold=0.5)
-    return metrics
+    # metric_func = smp.utils.metrics.Fscore  # batch wise calculation
+    # metric_kargs = dict(threshold=0.5)
+    metric_func = optimization_fn.Fscore  # dataset wise calculation
+    metric_kargs = {}
+    return metric_func, metric_kargs
 
 
 def get_augmentation_task():
     train_transform = [
+        albu.augmentations.geometric.resize.Resize(256, 512),
         albu.augmentations.transforms.HorizontalFlip(p=0.5),
     ]
 
     val_transform = [
-        albu.PadIfNeeded(256, 512)
+        albu.augmentations.geometric.resize.Resize(256, 512),
     ]
 
     return albu.Compose(train_transform), albu.Compose(val_transform)
@@ -65,13 +70,10 @@ def get_augmentation_task():
 class DatasetImp(GetDatasetSgmABC):
     class_values = [8]
 
-    # custom preprocessing
+    """
     def preprocess(self, image, mask):
-        width = 512
-        height = 256
-        mask = cv2.resize(mask, (width, height))
-        image = cv2.resize(image, (width, height))
-        return image, mask
+        # custom preprocessing
+    """
 
     """
     def __getitem__(self, i):
@@ -82,7 +84,7 @@ class DatasetImp(GetDatasetSgmABC):
 
 
 class GetOptimizationImp(GetOptimizationABC):
-    batch_size = 8
+    batch_size = 16
     epochs = 10
     lr = 0.001
     gpu = 0
@@ -96,11 +98,11 @@ class GetOptimizationImp(GetOptimizationABC):
 
 def command():
     mean_dice = list()
-    cv_fold = 5
-    for cv_i in range(cv_fold):
+    # アノテーションファイル取得
+    train_annos, val_annos = GetAnnotationImp()()
+    for i, (train_anno, val_anno) in enumerate(zip(train_annos, val_annos), 1):
+        print(f"trial: {i}/{len(train_annos)}")
 
-        # アノテーションファイル取得
-        train_anno, val_anno = GetAnnotationImp()(cv_fold, cv_i)
         # モデル構築
         model = get_model_task()
         # 損失関数
@@ -114,8 +116,9 @@ def command():
         val_data = DatasetImp(val_anno, val_aug)
         # 学習
         d = GetOptimizationImp(model, loss_fn, metrics, train_data, val_data)()
+
         mean_dice.append(d)
-    print("mean_dice: ", np.mean(mean_dice))
+    print("\n mean_dice: ", np.mean(mean_dice))
 
 
 if __name__ == "__main__":

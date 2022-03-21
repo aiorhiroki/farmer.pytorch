@@ -26,7 +26,7 @@ def seg_case_direct(
     return annotations
 
 
-def seg_case_first_targets(
+def seg_cases(
       root: str,
       image_dir: str,
       label_dir: str,
@@ -48,7 +48,7 @@ def seg_case_first_targets(
     return annos
 
 
-def seg_case_first_groups(
+def seg_case_groups(
       root: str,
       image_dir: str,
       label_dir: str,
@@ -81,11 +81,15 @@ def _get_img_files(p_dir: Path) -> List[Path]:
     return img_files
 
 
-def crossval(annos: List[List[Path]], cv_fold, cv_i, depth):
+def crossval(annos: List[List[Path]], cv_fold, depth):
+    train_annos = list()
+    val_annos = list()
+
     if depth == 0:
-        nb_val = len(annos) // cv_fold
-        train_annos = annos[:nb_val*cv_i] + annos[nb_val*(cv_i+1):]
-        val_annos = annos[nb_val*cv_i:nb_val*(cv_i+1)]
+        for cv_i in range(cv_fold):
+            nb_val = len(annos) // cv_fold
+            train_annos.append(annos[:nb_val*cv_i] + annos[nb_val*(cv_i+1):])
+            val_annos.append(annos[nb_val*cv_i:nb_val*(cv_i+1)])
     else:
         group_names = list()
         for img_file, _ in annos:
@@ -94,20 +98,22 @@ def crossval(annos: List[List[Path]], cv_fold, cv_i, depth):
             group_names.append(img_file.stem)
         group_counter = collections.Counter(group_names)
         cross_val_dirs = _cross_val_split(group_counter, cv_fold)
-        val_dirs = cross_val_dirs[cv_i]
-        train_dirs = list()
-        for val_i in range(cv_fold):
-            if val_i == cv_i:
-                continue
-            train_dirs += cross_val_dirs[val_i]
-        train_annos = [
-            anno for anno, group_name in zip(annos, group_names)
-            if group_name in train_dirs
-        ]
-        val_annos = [
-            anno for anno, group_name in zip(annos, group_names)
-            if group_name in val_dirs
-        ]
+
+        for cv_i in range(cv_fold):
+            val_dirs = cross_val_dirs[cv_i]
+            train_dirs = list()
+            for val_i in range(cv_fold):
+                if val_i == cv_i:
+                    continue
+                train_dirs += cross_val_dirs[val_i]
+            train_annos.append([
+                anno for anno, group_name in zip(annos, group_names)
+                if group_name in train_dirs
+            ])
+            val_annos.append([
+                anno for anno, group_name in zip(annos, group_names)
+                if group_name in val_dirs
+            ])
     return train_annos, val_annos
 
 
