@@ -5,3 +5,4 @@ __pycache__/
 *.out
 dist/
 quickstart/seg_data
+develop/

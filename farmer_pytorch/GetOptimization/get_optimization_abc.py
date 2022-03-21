@@ -1,6 +1,6 @@
 import torch
 from pathlib import Path
-from .get_optimization_fn import Logger
+from .optimization_fn import Logger
 
 
 class GetOptimizationABC:
@@ -10,10 +10,10 @@ class GetOptimizationABC:
     gpu: int
     optim_obj: torch.optim.Optimizer
 
-    def __init__(self, model, loss_func, metrics_func, train_data, val_data):
+    def __init__(self, model, loss_func, metrics, train_data, val_data):
         self.model = model
         self.loss_func = loss_func
-        self.metrics_func = metrics_func
+        self.metric_func, self.metric_kargs = metrics
         self.train_data = train_data
         self.val_data = val_data
         self.logger = Logger()
@@ -48,12 +48,13 @@ class GetOptimizationABC:
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
         self.model.train()
+        metric_func = self.metric_func(**self.metric_kargs)
         self.logger.set_progbar(len(train_loader))
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = self.model(inputs)
             loss = self.loss_func(outputs, labels)
-            metrics = self.metrics_func(outputs, labels)
+            metrics = metric_func(outputs, labels)
             self.logger.get_progbar(loss.item(), metrics.item())
             self.optimizer.zero_grad()
             loss.backward()
@@ -62,13 +63,14 @@ class GetOptimizationABC:
     def validation(self, valid_loader, device):
         print("\nvalidation step")
         self.model.eval()
+        metric_func = self.metric_func(self.metric_kargs)
         self.logger.set_progbar(len(valid_loader))
         with torch.no_grad():
             for inputs, labels in valid_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = self.model(inputs)
                 loss = self.loss_func(outputs, labels)
-                metrics = self.metrics_func(outputs, labels)
+                metrics = metric_func(outputs, labels)
                 self.logger.get_progbar(loss.item(), metrics.item())
         self.logger.update_metrics()
 
