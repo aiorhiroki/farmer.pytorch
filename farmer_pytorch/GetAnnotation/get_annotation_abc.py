@@ -27,8 +27,8 @@ class GetAnnotationABC:
             return crossval(cls.get_train_anno(), cls.cv_fold, cls.depth)
         else:
             return (
-                None if cls.get_train_fn is None else [cls.get_train_anno()],
-                None if cls.get_val_fn is None else [cls.get_val_anno()])
+                None if cls.get_train_fn is None else cls.get_train_anno(),
+                None if cls.get_val_fn is None else cls.get_val_anno())
 
     @classmethod
     def get_train_anno(cls):

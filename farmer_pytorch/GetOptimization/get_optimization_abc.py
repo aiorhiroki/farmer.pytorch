@@ -9,11 +9,12 @@ class GetOptimizationABC:
     lr: float
     gpu: int
     optim_obj: torch.optim.Optimizer
+    model: torch.nn.Module
+    loss_func: torch.nn.Module
+    metric_obj: torch.nn.Module
+    metric_kargs: dict = {}
 
-    def __init__(self, model, loss_func, metrics, train_data, val_data):
-        self.model = model
-        self.loss_func = loss_func
-        self.metric_func, self.metric_kargs = metrics
+    def __init__(self, train_data, val_data):
         self.train_data = train_data
         self.val_data = val_data
         self.logger = Logger()
@@ -48,7 +49,7 @@ class GetOptimizationABC:
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
         self.model.train()
-        metric_func = self.metric_func(**self.metric_kargs)
+        metric_func = self.metric_obj(**self.metric_kargs)
         self.logger.set_progbar(len(train_loader))
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
@@ -63,7 +64,7 @@ class GetOptimizationABC:
     def validation(self, valid_loader, device):
         print("\nvalidation step")
         self.model.eval()
-        metric_func = self.metric_func(self.metric_kargs)
+        metric_func = self.metric_obj(self.metric_kargs)
         self.logger.set_progbar(len(valid_loader))
         with torch.no_grad():
             for inputs, labels in valid_loader:
