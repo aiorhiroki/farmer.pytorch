@@ -1,5 +1,5 @@
 import torch
-import datetime
+from datetime import datetime
 from pathlib import Path
 from .optimization_fn import Logger
 
@@ -14,7 +14,7 @@ class GetOptimizationABC:
     loss_func: torch.nn.Module
     metric_obj: torch.nn.Module
     metric_kargs: dict = {}
-    result_dir: str = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    result_dir: str = datetime.now().strftime('results/%Y-%m-%d_%H-%M-%S')
 
     def __init__(self, train_data, val_data):
         self.train_data = train_data
