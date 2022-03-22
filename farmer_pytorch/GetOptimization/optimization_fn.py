@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 
 
 class Logger:
-    def __init__(self):
+    def __init__(self, result_dir):
+        self.result_dir = result_dir
         self.logs = {}
 
     def set_progbar(self, nb_iters):
@@ -25,7 +26,7 @@ class Logger:
     def plot_logs(self):
         for metric_name, history in self.logs.items():
             plt.plot(history)
-            plt.savefig(f"{metric_name}.png")
+            plt.savefig(f"{self.result_dir}/{metric_name}.png")
             plt.close()
 
 

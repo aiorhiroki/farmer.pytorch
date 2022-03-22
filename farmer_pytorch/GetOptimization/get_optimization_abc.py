@@ -1,4 +1,5 @@
 import torch
+import datetime
 from pathlib import Path
 from .optimization_fn import Logger
 
@@ -13,11 +14,12 @@ class GetOptimizationABC:
     loss_func: torch.nn.Module
     metric_obj: torch.nn.Module
     metric_kargs: dict = {}
+    result_dir: str = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
     def __init__(self, train_data, val_data):
         self.train_data = train_data
         self.val_data = val_data
-        self.logger = Logger()
+        self.logger = Logger(self.result_dir)
 
     def __call__(self):
         train_loader = torch.utils.data.DataLoader(
@@ -32,8 +34,8 @@ class GetOptimizationABC:
         self.optimizer = self.optim_obj(
             [dict(params=self.model.parameters(), lr=self.lr)])
 
-        save_model_dir = Path("./models")
-        save_model_dir.mkdir(exist_ok=True)
+        save_model_dir = Path(f"{self.result_dir}/models")
+        save_model_dir.mkdir(exist_ok=True, parents=True)
 
         self.logger.set_metrics(["dice"])
         for epoch in range(self.epochs):
