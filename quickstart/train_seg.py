@@ -6,18 +6,12 @@ import torch
 
 class GetAnnotationImp(fmp.GetAnnotationABC):
     target = "./seg_data/CamVid"
-    img_dir_train = "train"
-    label_dir_train = "trainannot"
-    get_train_fn = fmp.readers.seg_case_direct
-    img_dir_val = "val"
-    label_dir_val = "valannot"
-    get_val_fn = fmp.readers.seg_case_direct
+    get_train_fn = fmp.readers.CaseDirect("train", "trainannot")
+    get_val_fn = fmp.readers.CaseDirect("val", "valannot")
 
     """
-    @classmethod
-    def __call__(cls):
+    def __call__(self):
         # you can override GetAnnotation function
-        # use class variable, cls.target, cls.img_dir, cls.label_dir, etc..
         return train_set, validation_set
     """
 
@@ -38,7 +32,7 @@ class DatasetImp(fmp.GetDatasetSgmABC):
     """
     def __getitem__(self, i):
         # you can override getitem function
-        # use instance/class variable, self.annotation, self.augmentation ...
+        # use self.annotation, self.augmentation ...
         return in, out
     """
 
