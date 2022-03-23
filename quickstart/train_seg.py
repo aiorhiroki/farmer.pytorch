@@ -1,74 +1,28 @@
-from farmer_pytorch.GetAnnotation import GetAnnotationABC, get_annotation_fn
-from farmer_pytorch.GetDataset import GetDatasetSgmABC
-from farmer_pytorch.GetOptimization import GetOptimizationABC, optimization_fn
-
+import farmer_pytorch as fmp
 import segmentation_models_pytorch as smp
 import albumentations as albu
 import torch
-import numpy as np
 
 
-class GetAnnotationImp(GetAnnotationABC):
+class GetAnnotationImp(fmp.GetAnnotationABC):
     target = "./seg_data/CamVid"
-
-    img_dir_train = "train"
-    label_dir_train = "trainannot"
-    get_train_fn = get_annotation_fn.seg_case_direct
-
-    img_dir_val = "val"
-    label_dir_val = "valannot"
-    get_val_fn = get_annotation_fn.seg_case_direct
-
-    # cv_fold = 5
+    get_train_fn = fmp.readers.CaseDirect("train", "trainannot")
+    get_val_fn = fmp.readers.CaseDirect("val", "valannot")
 
     """
-    @classmethod
-    def __call__(cls):
+    def __call__(self):
         # you can override GetAnnotation function
-        # use class variable, cls.target, cls.img_dir, cls.label_dir, etc..
         return train_set, validation_set
     """
 
 
-def get_model_task():
-    model = smp.FPN(
-        encoder_name="efficientnet-b7",
-        encoder_weights="imagenet",
-        activation="sigmoid",
-        in_channels=3,
-        classes=1,
-    )
-    return model
-
-
-def get_loss_func_task():
-    loss_func = smp.utils.losses.DiceLoss()
-    return loss_func
-
-
-def get_metrics_task():
-    # metric_func = smp.utils.metrics.Fscore  # batch wise calculation
-    # metric_kargs = dict(threshold=0.5)
-    metric_func = optimization_fn.Fscore  # dataset wise calculation
-    metric_kargs = {}
-    return metric_func, metric_kargs
-
-
-def get_augmentation_task():
-    train_transform = [
-        albu.augmentations.geometric.resize.Resize(256, 512),
-        albu.augmentations.transforms.HorizontalFlip(p=0.5),
-    ]
-
-    val_transform = [
-        albu.augmentations.geometric.resize.Resize(256, 512),
-    ]
-
-    return albu.Compose(train_transform), albu.Compose(val_transform)
-
-
-class DatasetImp(GetDatasetSgmABC):
+class DatasetImp(fmp.GetDatasetSgmABC):
     class_values = [8]
+    train_trans = albu.Compose(
+        [albu.augmentations.geometric.resize.Resize(256, 512),
+         albu.augmentations.transforms.HorizontalFlip(p=0.5)])
+    val_trans = albu.Compose(
+        [albu.augmentations.geometric.resize.Resize(256, 512)])
 
     """
     def preprocess(self, image, mask):
@@ -78,17 +32,22 @@ class DatasetImp(GetDatasetSgmABC):
     """
     def __getitem__(self, i):
         # you can override getitem function
-        # use instance/class variable, self.annotation, self.augmentation ...
+        # use self.annotation, self.augmentation ...
         return in, out
     """
 
 
-class GetOptimizationImp(GetOptimizationABC):
+class GetOptimizationImp(fmp.GetOptimizationABC):
     batch_size = 16
     epochs = 10
     lr = 0.001
     gpu = 0
     optim_obj = torch.optim.Adam
+    model = smp.FPN(encoder_name="efficientnet-b7", encoder_weights="imagenet",
+                    activation="sigmoid", in_channels=3, classes=1,)
+    loss_func = smp.losses.DiceLoss('binary')
+    metric_func = fmp.metrics.Dice()
+    result_dir = "results/quickstart"
 
     """
     def on_epoch_end(self):
@@ -97,28 +56,9 @@ class GetOptimizationImp(GetOptimizationABC):
 
 
 def command():
-    mean_dice = list()
-    # アノテーションファイル取得
-    train_annos, val_annos = GetAnnotationImp()()
-    for i, (train_anno, val_anno) in enumerate(zip(train_annos, val_annos), 1):
-        print(f"trial: {i}/{len(train_annos)}")
-
-        # モデル構築
-        model = get_model_task()
-        # 損失関数
-        loss_fn = get_loss_func_task()
-        # 評価指標
-        metrics = get_metrics_task()
-        # データ拡張方法の定義
-        train_aug, val_aug = get_augmentation_task()
-        # データ読み込み・前処理
-        train_data = DatasetImp(train_anno, train_aug)
-        val_data = DatasetImp(val_anno, val_aug)
-        # 学習
-        d = GetOptimizationImp(model, loss_fn, metrics, train_data, val_data)()
-
-        mean_dice.append(d)
-    print("\n mean_dice: ", np.mean(mean_dice))
+    train_anno, val_anno = GetAnnotationImp()()
+    train, val = DatasetImp(train_anno, training=True), DatasetImp(val_anno)
+    GetOptimizationImp(train, val)()
 
 
 if __name__ == "__main__":

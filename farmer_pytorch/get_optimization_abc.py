@@ -1,6 +1,7 @@
 import torch
+from datetime import datetime
 from pathlib import Path
-from .optimization_fn import Logger
+from .logger import Logger
 
 
 class GetOptimizationABC:
@@ -9,14 +10,15 @@ class GetOptimizationABC:
     lr: float
     gpu: int
     optim_obj: torch.optim.Optimizer
+    model: torch.nn.Module
+    loss_func: torch.nn.Module
+    metric_func: torch.nn.Module
+    result_dir: str = datetime.now().strftime('results/%Y-%m-%d_%H-%M-%S')
 
-    def __init__(self, model, loss_func, metrics, train_data, val_data):
-        self.model = model
-        self.loss_func = loss_func
-        self.metric_func, self.metric_kargs = metrics
+    def __init__(self, train_data, val_data):
         self.train_data = train_data
         self.val_data = val_data
-        self.logger = Logger()
+        self.logger = Logger(self.result_dir)
 
     def __call__(self):
         train_loader = torch.utils.data.DataLoader(
@@ -31,8 +33,8 @@ class GetOptimizationABC:
         self.optimizer = self.optim_obj(
             [dict(params=self.model.parameters(), lr=self.lr)])
 
-        save_model_dir = Path("./models")
-        save_model_dir.mkdir(exist_ok=True)
+        save_model_dir = Path(f"{self.result_dir}/models")
+        save_model_dir.mkdir(exist_ok=True, parents=True)
 
         self.logger.set_metrics(["dice"])
         for epoch in range(self.epochs):
@@ -48,13 +50,13 @@ class GetOptimizationABC:
     def train(self, train_loader, device, epoch):
         print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
         self.model.train()
-        metric_func = self.metric_func(**self.metric_kargs)
+        getattr(self.metric_func, "reset_state", lambda: None)()
         self.logger.set_progbar(len(train_loader))
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = self.model(inputs)
             loss = self.loss_func(outputs, labels)
-            metrics = metric_func(outputs, labels)
+            metrics = self.metric_func(outputs, labels)
             self.logger.get_progbar(loss.item(), metrics.item())
             self.optimizer.zero_grad()
             loss.backward()
@@ -63,14 +65,14 @@ class GetOptimizationABC:
     def validation(self, valid_loader, device):
         print("\nvalidation step")
         self.model.eval()
-        metric_func = self.metric_func(self.metric_kargs)
+        getattr(self.metric_func, "reset_state", lambda: None)()
         self.logger.set_progbar(len(valid_loader))
         with torch.no_grad():
             for inputs, labels in valid_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = self.model(inputs)
                 loss = self.loss_func(outputs, labels)
-                metrics = metric_func(outputs, labels)
+                metrics = self.metric_func(outputs, labels)
                 self.logger.get_progbar(loss.item(), metrics.item())
         self.logger.update_metrics()
 
