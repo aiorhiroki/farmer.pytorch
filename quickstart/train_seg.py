@@ -4,7 +4,7 @@ import albumentations as albu
 import torch
 
 
-class GetAnnotationImp(fmp.GetAnnotationABC):
+class AnnotationImp(fmp.GetAnnotationABC):
     target = "./seg_data/CamVid"
     get_train_fn = fmp.readers.CaseDirect("train", "trainannot")
     get_val_fn = fmp.readers.CaseDirect("val", "valannot")
@@ -26,7 +26,8 @@ class DatasetImp(fmp.GetDatasetSgmABC):
 
     """
     def preprocess(self, image, mask):
-        # custom preprocessing
+        # set custom preprocessing function
+        return image, mask
     """
 
     """
@@ -37,15 +38,15 @@ class DatasetImp(fmp.GetDatasetSgmABC):
     """
 
 
-class GetOptimizationImp(fmp.GetOptimizationABC):
+class OptimizationImp(fmp.GetOptimizationABC):
     batch_size = 16
     epochs = 10
     lr = 0.001
     gpu = 0
-    optim_obj = torch.optim.Adam
+    optimizer = torch.optim.Adam
     model = smp.FPN(encoder_name="efficientnet-b7", encoder_weights="imagenet",
                     activation="sigmoid", in_channels=3, classes=1,)
-    loss_func = smp.losses.DiceLoss('binary')
+    loss_func = smp.losses.DiceLoss('binary', from_logits=False)
     metric_func = fmp.metrics.Dice()
     result_dir = "results/quickstart"
 
@@ -56,9 +57,9 @@ class GetOptimizationImp(fmp.GetOptimizationABC):
 
 
 def command():
-    train_anno, val_anno = GetAnnotationImp()()
+    train_anno, val_anno = AnnotationImp()()
     train, val = DatasetImp(train_anno, training=True), DatasetImp(val_anno)
-    GetOptimizationImp(train, val)()
+    OptimizationImp(train, val)()
 
 
 if __name__ == "__main__":

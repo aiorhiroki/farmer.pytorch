@@ -9,7 +9,7 @@ class GetOptimizationABC:
     epochs: int
     lr: float
     gpu: int
-    optim_obj: torch.optim.Optimizer
+    optimizer: torch.optim.Optimizer
     model: torch.nn.Module
     loss_func: torch.nn.Module
     metric_func: torch.nn.Module
@@ -30,7 +30,7 @@ class GetOptimizationABC:
         device = torch.device(device_name)
         print(device)
         self.model.to(device)
-        self.optimizer = self.optim_obj(
+        self.optimize = self.optimizer(
             [dict(params=self.model.parameters(), lr=self.lr)])
 
         save_model_dir = Path(f"{self.result_dir}/models")
@@ -58,9 +58,9 @@ class GetOptimizationABC:
             loss = self.loss_func(outputs, labels)
             metrics = self.metric_func(outputs, labels)
             self.logger.get_progbar(loss.item(), metrics.item())
-            self.optimizer.zero_grad()
+            self.optimize.zero_grad()
             loss.backward()
-            self.optimizer.step()
+            self.optimize.step()
 
     def validation(self, valid_loader, device):
         print("\nvalidation step")
