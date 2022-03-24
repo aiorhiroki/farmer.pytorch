@@ -16,8 +16,8 @@ class GetDatasetSgmABC(Dataset):
     def __getitem__(self, i):
         img_file, label_file = self.annotation[i]
 
-        image = np.array(Image.open(str(img_file)))
-        mask = np.array(Image.open(str(label_file)))
+        image = np.array(Image.open(img_file))
+        mask = np.array(Image.open(label_file))
 
         # apply augmentations
         if self.augmentation:
