@@ -2,11 +2,13 @@ import torch
 
 
 class SegMetrics:
-    def __init__(self, class_weights=None):
+    def __init__(self, from_logits=True, threshold=None, class_weights=None):
         self.tp = None
         self.fp = None
         self.tn = None
         self.fn = None
+        self.from_logits = from_logits
+        self.threshold = threshold
         self.class_weights = class_weights
 
     def reset_state(self):
@@ -50,11 +52,12 @@ class SegMetrics:
         self,
         output: torch.LongTensor,
         target: torch.LongTensor,
-        threshold: float = None
     ):
-        if threshold is not None:
-            output = torch.where(output >= threshold, 1, 0)
-            target = torch.where(target >= threshold, 1, 0)
+        if self.from_logits:
+            output = torch.nn.functional.logsigmoid(output).exp()
+        if self.threshold is not None:
+            output = torch.where(output >= self.threshold, 1, 0)
+            target = torch.where(target >= self.threshold, 1, 0)
 
         batch_size, num_classes, *dims = target.shape
         output = output.view(batch_size, num_classes, -1)
