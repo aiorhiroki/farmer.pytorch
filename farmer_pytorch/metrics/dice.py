@@ -2,8 +2,8 @@ from . import base
 
 
 class Dice(base.SegMetrics):
-    def __init__(self, class_weights=None):
-        super().__init__(class_weights)
+    def __init__(self, from_logits=True, threshold=None, class_weights=None):
+        super().__init__(from_logits, threshold, class_weights)
 
     def __call__(self, outputs, labels):
         return self._compute_metric(outputs, labels, self._fbeta_score)
