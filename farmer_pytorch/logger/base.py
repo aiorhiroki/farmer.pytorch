@@ -4,8 +4,7 @@ from .progress_bar import ProgressBar
 
 
 class Logger:
-    def __init__(self, result_dir):
-        self.result_dir = result_dir
+    def __init__(self):
         self.logs = {}
 
     def set_progbar(self, nb_iters):
@@ -31,12 +30,12 @@ class Logger:
     def _plot_logs(self):
         for metric_name, history in self.logs.items():
             plt.plot(history)
-            plt.savefig(f"{self.result_dir}/{metric_name}.png")
+            plt.savefig(f"{metric_name}.png")
             plt.close()
 
     def _save_metric(self):
         scores = {m: history[-1] for m, history in self.logs.items()}
-        with open(f"{self.result_dir}/scores.json", "w") as fw:
+        with open("scores.json", "w") as fw:
             json.dump(scores, fw)
 
         history_dict = {}
@@ -44,5 +43,5 @@ class Logger:
             history_dict[m] = []
             for epoch, history in enumerate(historys):
                 history_dict[m] += [{'epoch': epoch, m: history}]
-            with open(f"{self.result_dir}/{m}.json", "w") as fw:
+            with open(f"{m}.json", "w") as fw:
                 json.dump(history_dict, fw, indent=4)

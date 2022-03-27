@@ -5,12 +5,12 @@ stages:
     - seg_data/CamVid
     - train_seg.py
     outs:
-    - results/models/last.pth
+    - last.pth
     metrics:
-    - results/scores.json:
+    - scores.json:
         cache: false
     plots:
-    - results/dice.json:
+    - dice.json:
         cache: false
         x: epoch
         y: dice
