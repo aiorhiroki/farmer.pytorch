@@ -4,6 +4,5 @@ __pycache__/
 *.pth
 *.out
 dist/
-quickstart/seg_data
 quickstart/develop
 quickstart/results
