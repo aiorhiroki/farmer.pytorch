@@ -48,7 +48,7 @@ class OptimizationImp(fmp.GetOptimizationABC):
                     activation="sigmoid", in_channels=3, classes=1,)
     loss_func = smp.losses.DiceLoss('binary', from_logits=False)
     metric_func = fmp.metrics.Dice()
-    result_dir = "results/quickstart"
+    result_dir = "results"
 
     """
     def on_epoch_end(self):
