@@ -40,9 +40,9 @@ class GetOptimizationABC:
         for epoch in range(self.epochs):
             self.train(train_loader, device, epoch)
             self.validation(valid_loader, device)
-            model_path = f'{save_model_dir}/model_epoch{epoch}.pth'
+            model_path = f'{save_model_dir}/last.pth'
             torch.save(self.model.state_dict(), model_path)
-            self.logger.plot_logs()
+            self.logger.on_epoch_end()
             self.on_epoch_end()
 
         return self.logger.get_latest_metrics()
