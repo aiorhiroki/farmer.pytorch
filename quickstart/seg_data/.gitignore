@@ -1,8 +1,0 @@
-*.caffemodel
-/CamVid
-.gitattributes
-/Example_Models
-/Models
-/README.md
-/Scripts
-/docker
