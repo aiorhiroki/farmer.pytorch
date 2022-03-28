@@ -40,7 +40,7 @@ class DatasetImp(fmp.GetDatasetSgmABC):
 
 class OptimizationImp(fmp.GetOptimizationABC):
     batch_size = 16
-    epochs = 3
+    epochs = 30
     lr = 0.001
     gpu = 2
     optimizer = torch.optim.Adam
