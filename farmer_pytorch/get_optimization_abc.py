@@ -11,11 +11,12 @@ class GetOptimizationABC:
     model: torch.nn.Module
     loss_func: torch.nn.Module
     metric_func: torch.nn.Module
+    result_dir: str = 'result'
 
     def __init__(self, train_data, val_data):
         self.train_data = train_data
         self.val_data = val_data
-        self.logger = Logger()
+        self.logger = Logger(self.result_dir)
 
     def __call__(self):
         train_loader = torch.utils.data.DataLoader(
@@ -34,7 +35,7 @@ class GetOptimizationABC:
         for epoch in range(self.epochs):
             self.train(train_loader, device, epoch)
             self.validation(valid_loader, device)
-            torch.save(self.model.state_dict(), 'last.pth')
+            torch.save(self.model.state_dict(), f'{self.result_dir}/last.pth')
             self.logger.on_epoch_end()
             self.on_epoch_end()
 
