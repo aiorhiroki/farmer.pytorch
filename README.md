@@ -7,4 +7,4 @@ pip install farmer-pytorch
 
 
 ## Quick start
-[quick start](quickstart/)
+[quick start](https://github.com/aiorhiroki/fmp_dvc)
