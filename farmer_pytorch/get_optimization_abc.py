@@ -1,4 +1,5 @@
 import torch
+from typing import Callable
 from .logger import Logger
 
 
@@ -8,6 +9,7 @@ class GetOptimizationABC:
     lr: float
     gpu: int
     optimizer: torch.optim.Optimizer
+    scheduler_func: Callable[int, float]
     model: torch.nn.Module
     loss_func: torch.nn.Module
     metric_func: torch.nn.Module
@@ -30,6 +32,8 @@ class GetOptimizationABC:
         self.model.to(device)
         self.optimize = self.optimizer(
             [dict(params=self.model.parameters(), lr=self.lr)])
+        self.scheduler = torch.optim.lr_scheduler.LambdaLR(
+            self.optimize, lr_lambda=self.scheduler_func)
 
         self.logger.set_metrics(["dice"])
         for epoch in range(self.epochs):
@@ -55,6 +59,7 @@ class GetOptimizationABC:
             self.optimize.zero_grad()
             loss.backward()
             self.optimize.step()
+            self.scheduler.step()
 
     def validation(self, valid_loader, device):
         print("\nvalidation step")
