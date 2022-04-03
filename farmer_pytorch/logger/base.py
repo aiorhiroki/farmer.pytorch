@@ -13,8 +13,8 @@ class Logger:
     def set_progbar(self, nb_iters):
         self.prog_bar = ProgressBar(nb_iters)
 
-    def get_progbar(self, loss, metrics):
-        self.prog_bar.print_prog_bar(loss, metrics)
+    def get_progbar(self, loss, metrics, lr=[]):
+        self.prog_bar.print_prog_bar(loss, metrics, lr)
 
     def set_metrics(self, metric_names: list):
         for metric_name in metric_names:

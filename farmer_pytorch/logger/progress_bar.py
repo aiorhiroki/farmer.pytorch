@@ -5,7 +5,7 @@ class ProgressBar:
         self._total_loss = 0
         self._total_metrics = 0
 
-    def print_prog_bar(self, loss, metrics, length=50):
+    def print_prog_bar(self, loss, metrics, lr_list, length=30):
         self._iter_i += 1
         prob_norm = length / self._nb_iters
         done = '=' * int(self._iter_i * prob_norm)
@@ -14,8 +14,9 @@ class ProgressBar:
 
         self._total_loss += loss
         self._total_metrics += metrics
-        cout += f" loss: {(self._total_loss / self._iter_i):.5g}"
-        cout += f" dice: {(self._total_metrics / self._iter_i):.5g}"
+        cout += f" loss: {(self._total_loss / self._iter_i):.4g}"
+        cout += f" dice: {(self._total_metrics / self._iter_i):.4g}"
+        cout += " lr: " + ",".join([f"{lr:.3g}" for lr in lr_list])
         print("\r"+cout, end="")
 
     def get_latest_metrics(self):
