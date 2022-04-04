@@ -13,6 +13,7 @@ class GetOptimizationABC:
     loss_func: torch.nn.Module
     metric_func: torch.nn.Module
     result_dir: str = 'result'
+    port: str = '12346'
 
     def __init__(self, train_data, val_data):
         self.train_data = train_data
@@ -31,12 +32,12 @@ class GetOptimizationABC:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             self.train_data) if self.is_distributed else None
         train_loader = torch.utils.data.DataLoader(
-            self.train_data, batch_size=self.batch_size,
+            self.train_data, batch_size=self.batch_size, drop_last=True,
             shuffle=(train_sampler is None), sampler=train_sampler)
         valid_sampler = torch.utils.data.distributed.DistributedSampler(
             self.val_data) if self.is_distributed else None
         valid_loader = torch.utils.data.DataLoader(
-            self.val_data, batch_size=self.batch_size,
+            self.val_data, batch_size=self.batch_size, drop_last=True,
             shuffle=False, sampler=valid_sampler)
         self.gpus = self.gpus if torch.cuda.is_available() else []
         self.model.to(rank)
@@ -100,7 +101,7 @@ class GetOptimizationABC:
     def setup(self, rank):
         print(f"rank: {rank}")
         os.environ['MASTER_ADDR'] = 'localhost'
-        os.environ['MASTER_PORT'] = '12346'
+        os.environ['MASTER_PORT'] = self.port
         torch.distributed.init_process_group(
             "gloo", rank=rank, world_size=self.world_size)
 
