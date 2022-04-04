@@ -1,6 +1,5 @@
 import torch
 import os
-from typing import Callable
 from .logger import Logger
 
 
@@ -10,7 +9,6 @@ class GetOptimizationABC:
     lr: float
     gpus: str
     optimizer: torch.optim.Optimizer
-    scheduler_func: Callable[[int], float] = lambda epoch: 0.95 ** epoch
     model: torch.nn.Module
     loss_func: torch.nn.Module
     metric_func: torch.nn.Module
@@ -40,7 +38,6 @@ class GetOptimizationABC:
         valid_loader = torch.utils.data.DataLoader(
             self.val_data, batch_size=self.batch_size,
             shuffle=False, sampler=valid_sampler)
-        print("initialize dataloader", rank)
         self.gpus = self.gpus if torch.cuda.is_available() else []
         self.model.to(rank)
         self.model = torch.nn.parallel.DistributedDataParallel(
@@ -109,3 +106,10 @@ class GetOptimizationABC:
 
     def cleanup(self):
         torch.distributed.destroy_process_group()
+
+    @staticmethod
+    def scheduler_func(epoch):
+        if epoch > 10:
+            return 0.9 ** (epoch-10)
+        else:
+            return 1
