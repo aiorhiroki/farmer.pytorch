@@ -1,6 +1,7 @@
 import torch
 import os
 from .logger import Logger
+from .metrics import SegMetrics
 
 
 class GetOptimizationABC:
@@ -11,7 +12,6 @@ class GetOptimizationABC:
     optimizer: torch.optim.Optimizer
     model: torch.nn.Module
     loss_func: torch.nn.Module
-    metric_func: torch.nn.Module
     result_dir: str = 'result'
     port: str = '12346'
 
@@ -65,36 +65,37 @@ class GetOptimizationABC:
         if rank == 0:
             print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
         self.model.train()
-        getattr(self.metric_func, "reset_state", lambda: None)()
         self.logger.set_progbar(len(train_loader))
+        lr = self.scheduler.get_last_lr()
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(rank), labels.to(rank)
             outputs = self.model(inputs)
             loss = self.loss_func(outputs, labels)
-            metrics = self.metric_func(outputs, labels)
-            if rank == 0:
-                self.logger.get_progbar(
-                    loss.item(), metrics.item(), self.scheduler.get_last_lr())
             self.optimize.zero_grad()
             loss.backward()
             self.optimize.step()
+            if rank == 0:
+                self.logger.get_progbar(loss.item(), lr=lr)
         self.scheduler.step()
         if rank == 0:
             torch.save(self.model.state_dict(), f'{self.result_dir}/last.pth')
 
     def validation(self, valid_loader, rank):
-        print("\nvalidation step")
+        if rank == 0:
+            print("\nvalidation step")
         self.model.eval()
-        getattr(self.metric_func, "reset_state", lambda: None)()
         self.logger.set_progbar(len(valid_loader))
+        metrics = SegMetrics()
         with torch.no_grad():
             for inputs, labels in valid_loader:
                 inputs, labels = inputs.to(rank), labels.to(rank)
                 outputs = self.model(inputs)
                 loss = self.loss_func(outputs, labels)
-                metrics = self.metric_func(outputs, labels)
+                confusion = metrics.calc_confusion(outputs, labels)
+                torch.distributed.all_reduce(confusion)
                 if rank == 0:
-                    self.logger.get_progbar(loss.item(), metrics.item())
+                    dice = metrics.compute_metric(confusion, metrics.dice)
+                    self.logger.get_progbar(loss.item(), dice=dice.item())
         self.logger.update_metrics()
 
     def on_epoch_end(self):

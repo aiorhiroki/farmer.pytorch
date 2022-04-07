@@ -1,3 +1,3 @@
-from .dice import Dice
+from .seg_metrics import SegMetrics
 
-__all__ = ['Dice']
+__all__ = ['SegMetrics']

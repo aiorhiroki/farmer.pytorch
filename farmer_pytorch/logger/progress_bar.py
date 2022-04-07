@@ -11,12 +11,13 @@ class ProgressBar:
         done = '=' * int(self._iter_i * prob_norm)
         todo = ' ' * int((self._nb_iters - self._iter_i) * prob_norm)
         cout = f"[{done + todo}] {self._iter_i}/{self._nb_iters}"
-
         self._total_loss += loss
-        self._total_metrics += metrics
         cout += f" loss: {(self._total_loss / self._iter_i):.4g}"
-        cout += f" dice: {(self._total_metrics / self._iter_i):.4g}"
-        cout += " lr: " + ",".join([f"{lr:.3g}" for lr in lr_list])
+        if metrics:
+            self._total_metrics += metrics
+            cout += f" dice: {(self._total_metrics / self._iter_i):.4g}"
+        if lr_list:
+            cout += " lr: " + ",".join([f"{lr:.3g}" for lr in lr_list])
         print("\r"+cout, end="")
 
     def get_latest_metrics(self):
