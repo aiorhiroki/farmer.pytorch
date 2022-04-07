@@ -72,8 +72,9 @@ class GetOptimizationABC:
             outputs = self.model(inputs)
             loss = self.loss_func(outputs, labels)
             metrics = self.metric_func(outputs, labels)
-            self.logger.get_progbar(
-                loss.item(), metrics.item(), self.scheduler.get_last_lr())
+            if rank == 0:
+                self.logger.get_progbar(
+                    loss.item(), metrics.item(), self.scheduler.get_last_lr())
             self.optimize.zero_grad()
             loss.backward()
             self.optimize.step()
@@ -92,7 +93,8 @@ class GetOptimizationABC:
                 outputs = self.model(inputs)
                 loss = self.loss_func(outputs, labels)
                 metrics = self.metric_func(outputs, labels)
-                self.logger.get_progbar(loss.item(), metrics.item())
+                if rank == 0:
+                    self.logger.get_progbar(loss.item(), metrics.item())
         self.logger.update_metrics()
 
     def on_epoch_end(self):
