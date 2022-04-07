@@ -54,8 +54,9 @@ class GetOptimizationABC:
                 train_sampler.set_epoch(epoch)
             self.train(train_loader, rank, epoch)
             self.validation(valid_loader, rank)
-            self.logger.on_epoch_end()
-            self.on_epoch_end()
+            if rank == 0:
+                self.logger.on_epoch_end()
+                self.on_epoch_end()
 
         self.cleanup()
 
