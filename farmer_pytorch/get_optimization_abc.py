@@ -96,7 +96,8 @@ class GetOptimizationABC:
                 if rank == 0:
                     dice = metrics.compute_metric(confusion, metrics.dice)
                     self.logger.get_progbar(loss.item(), dice=dice.item())
-        self.logger.update_metrics()
+        if rank == 0:
+            self.logger.update_metrics()
 
     def on_epoch_end(self):
         pass
