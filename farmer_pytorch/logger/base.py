@@ -32,7 +32,7 @@ class Logger:
         plt.close()
 
     def _save_metric(self):
-        scores = dict(dice=self.dice_history)
+        scores = dict(dice=self.dice_history[-1])
         with open(f"{self.result_dir}/scores.json", "w") as fw:
             json.dump(scores, fw)
 
