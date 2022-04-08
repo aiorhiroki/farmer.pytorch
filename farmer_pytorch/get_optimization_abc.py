@@ -93,7 +93,8 @@ class GetOptimizationABC:
                 outputs = self.model(inputs)
                 loss = self.loss_func(outputs, labels)
                 confusion = metrics.calc_confusion(outputs, labels)
-                torch.distributed.all_reduce(confusion)
+                if self.is_distributed:
+                    torch.distributed.all_reduce(confusion)
                 if rank == 0:
                     dice = metrics.compute_metric(confusion, metrics.dice)
                     self.logger.get_progbar(loss.item(), dice=dice.item())
