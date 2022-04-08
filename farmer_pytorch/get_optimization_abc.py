@@ -48,7 +48,6 @@ class GetOptimizationABC:
         self.scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimize, lr_lambda=self.scheduler_func)
 
-        self.logger.set_metrics(["dice"])
         for epoch in range(self.epochs):
             if self.is_distributed:
                 train_sampler.set_epoch(epoch)
@@ -57,9 +56,7 @@ class GetOptimizationABC:
             if rank == 0:
                 self.logger.on_epoch_end()
                 self.on_epoch_end()
-
         self.cleanup()
-
         return self.logger.get_latest_metrics()
 
     def train(self, train_loader, rank, epoch):
@@ -69,9 +66,8 @@ class GetOptimizationABC:
         self.logger.set_progbar(len(train_loader))
         lr = self.scheduler.get_last_lr()
         for inputs, labels in train_loader:
-            inputs, labels = inputs.to(rank), labels.to(rank)
-            outputs = self.model(inputs)
-            loss = self.loss_func(outputs, labels)
+            outputs = self.model(inputs.to(rank))
+            loss = self.loss_func(outputs, labels.to(rank))
             self.optimize.zero_grad()
             loss.backward()
             self.optimize.step()
@@ -89,10 +85,9 @@ class GetOptimizationABC:
         metrics = SegMetrics()
         with torch.no_grad():
             for inputs, labels in valid_loader:
-                inputs, labels = inputs.to(rank), labels.to(rank)
-                outputs = self.model(inputs)
-                loss = self.loss_func(outputs, labels)
-                confusion = metrics.calc_confusion(outputs, labels)
+                outputs = self.model(inputs.to(rank))
+                loss = self.loss_func(outputs, labels.to(rank))
+                confusion = metrics.calc_confusion(outputs, labels.to(rank))
                 if self.is_distributed:
                     torch.distributed.all_reduce(confusion)
                 if rank == 0:
@@ -116,7 +111,4 @@ class GetOptimizationABC:
 
     @staticmethod
     def scheduler_func(epoch):
-        if epoch > 10:
-            return 0.9 ** (epoch-10)
-        else:
-            return 1
+        return 0.9 ** (epoch-10) if epoch > 10 else 1
