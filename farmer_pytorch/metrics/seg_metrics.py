@@ -8,7 +8,7 @@ class SegMetrics:
     @torch.no_grad()
     def calc_confusion(
             self, output: torch.LongTensor, target: torch.LongTensor,
-            from_logits=True, threshold=None):
+            from_logits=False, threshold=None):
         if from_logits:
             output = torch.nn.functional.logsigmoid(output).exp()
         if threshold is not None:
