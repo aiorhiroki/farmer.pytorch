@@ -28,8 +28,8 @@ class GetOptimizationABC:
             self.fit, args=(), nprocs=self.world_size, join=True)
 
     def fit(self, rank):
-        self.setup(rank)
         self.set_env(rank)
+        self.set_params(rank)
         sampler, train_loader, valid_loader = self.make_data_loader()
         for epoch in range(self.epochs):
             self.train(train_loader, rank, sampler, epoch)
@@ -37,7 +37,7 @@ class GetOptimizationABC:
         self.cleanup()
         return self.logger.get_latest_metrics()
 
-    def set_env(self, rank):
+    def set_params(self, rank):
         self.gpus = self.gpus if torch.cuda.is_available() else []
         self.model = torch.nn.parallel.DistributedDataParallel(
           self.model.to(rank), device_ids=[rank], find_unused_parameters=True)
@@ -97,7 +97,7 @@ class GetOptimizationABC:
         if rank == 0:
             self.logger.update_metrics()
 
-    def setup(self, rank):
+    def set_env(self, rank):
         print(f"rank: {rank}")
         os.environ['MASTER_ADDR'] = 'localhost'
         os.environ['MASTER_PORT'] = self.port
