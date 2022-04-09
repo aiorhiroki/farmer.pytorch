@@ -13,7 +13,7 @@ class Logger:
     def set_progbar(self, nb_iters):
         self.prog_bar = ProgressBar(nb_iters)
 
-    def get_progbar(self, loss, dice=None, lr=None):
+    def __call__(self, loss, dice=None, lr=None):
         self.prog_bar.print_prog_bar(loss, dice, lr)
 
     def get_latest_metrics(self):
@@ -21,8 +21,6 @@ class Logger:
 
     def update_metrics(self):
         self.dice_history += [self.get_latest_metrics()]
-
-    def on_epoch_end(self):
         self._plot_logs()
         self._save_metric()
 
