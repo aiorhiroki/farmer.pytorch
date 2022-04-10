@@ -9,7 +9,7 @@ class GetOptimizationABC:
     epochs: int
     lr: float
     gpus: str
-    optimizer: torch.optim.Optimizer
+    optimizer_cls: torch.optim.Optimizer
     model: torch.nn.Module
     loss_func: torch.nn.Module
     result_dir: str = 'result'
@@ -21,7 +21,6 @@ class GetOptimizationABC:
         self.logger = Logger(self.result_dir)
         self.world_size = len(self.gpus.split(","))
         self.is_distributed = self.world_size > 1
-        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpus
 
     def __call__(self):
         torch.multiprocessing.spawn(
@@ -38,13 +37,18 @@ class GetOptimizationABC:
         return self.logger.get_latest_metrics()
 
     def set_params(self, rank):
-        self.gpus = self.gpus if torch.cuda.is_available() else []
         self.model = torch.nn.parallel.DistributedDataParallel(
           self.model.to(rank), device_ids=[rank], find_unused_parameters=True)
-        self.optimize = self.optimizer(
+        self.set_optimizer()
+        self.set_scheduler()
+
+    def set_optimizer(self):
+        self.optimizer = self.optimizer_cls(
             [dict(params=self.model.parameters(), lr=self.lr)])
+
+    def set_scheduler(self):
         self.scheduler = torch.optim.lr_scheduler.LambdaLR(
-            self.optimize, lr_lambda=self.scheduler_func)
+            self.optimizer, lr_lambda=self.scheduler_func)
 
     def make_data_loader(self):
         train_sampler = torch.utils.data.distributed.DistributedSampler(
@@ -69,9 +73,9 @@ class GetOptimizationABC:
         for inputs, labels in train_loader:
             outputs = self.model(inputs.to(rank))
             loss = self.loss_func(outputs, labels.to(rank))
-            self.optimize.zero_grad()
+            self.optimizer.zero_grad()
             loss.backward()
-            self.optimize.step()
+            self.optimizer.step()
             if rank == 0:
                 self.logger(loss.item(), lr=self.scheduler.get_last_lr())
         self.scheduler.step()
@@ -99,6 +103,7 @@ class GetOptimizationABC:
 
     def set_env(self, rank):
         print(f"rank: {rank}")
+        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpus
         os.environ['MASTER_ADDR'] = 'localhost'
         os.environ['MASTER_PORT'] = self.port
         torch.distributed.init_process_group(
