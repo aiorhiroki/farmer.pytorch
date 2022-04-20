@@ -1,10 +1,10 @@
-from .get_annotation_abc import GetAnnotationABC
-from .get_dataset_abc import GetDatasetSgmABC
-from .get_optimization_abc import GetOptimizationABC
+from .get_annotation import GetAnnotation
+from .get_dataset import GetDatasetSgm
+from .get_optimization import GetOptimization
 
 from . import metrics
 from . import logger
 from . import readers
 
-__all__ = ['GetAnnotationABC', 'GetDatasetSgmABC', 'GetOptimizationABC',
+__all__ = ['GetAnnotation', 'GetDatasetSgm', 'GetOptimization',
            'metrics', 'logger', 'readers']

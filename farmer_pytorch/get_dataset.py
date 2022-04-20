@@ -6,7 +6,7 @@ from typing import List, Any
 
 
 @dataclasses.dataclass
-class GetDatasetSgmABC(Dataset):
+class GetDatasetSgm(Dataset):
     annotation: List[List[str]]
     class_values: List[int]
     augmentation: List[Any] = dataclasses.field(default_factory=list)

@@ -4,7 +4,7 @@ import dataclasses
 
 
 @dataclasses.dataclass
-class GetAnnotationABC:
+class GetAnnotation:
     target: str
 
     # for train annotation

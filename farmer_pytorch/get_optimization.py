@@ -6,7 +6,7 @@ import dataclasses
 
 
 @dataclasses.dataclass
-class GetOptimizationABC:
+class GetOptimization:
     train_data: torch.utils.data.Dataset
     val_data: torch.utils.data.Dataset
     batch_size: int
@@ -82,8 +82,9 @@ class GetOptimizationABC:
             loss.backward()
             self.optimizer.step()
             if rank == 0:
-                self.logger(loss.item(), lr=self.scheduler.get_last_lr())
-        self.scheduler.step()
+                self.logger(
+                    loss.item(),
+                    lr=[group['lr'] for group in self.optimizer.param_groups])
         if rank == 0:
             torch.save(
                 self.model_without_ddp.state_dict(),
@@ -107,6 +108,10 @@ class GetOptimizationABC:
                     self.logger(loss.item(), dice=dice.item())
         if rank == 0:
             self.logger.update_metrics()
+            self.on_epoch_end()
+
+    def on_epoch_end(self):
+        self.scheduler.step()
 
     def set_env(self, rank):
         print(f"rank: {rank}")
