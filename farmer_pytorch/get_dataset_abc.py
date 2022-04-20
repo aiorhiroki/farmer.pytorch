@@ -1,17 +1,15 @@
 from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
+import dataclasses
 from typing import List, Any
 
 
+@dataclasses.dataclass
 class GetDatasetSgmABC(Dataset):
+    annotation: List[List[str]]
     class_values: List[int]
-    train_trans: List[Any] = []
-    val_trans: List[Any] = []
-
-    def __init__(self, annotation, training=False):
-        self.annotation = annotation
-        self.augmentation = self.train_trans if training else self.val_trans
+    augmentation: List[Any] = dataclasses.field(default_factory=list)
 
     def __getitem__(self, i):
         img_file, label_file = self.annotation[i]

@@ -1,16 +1,18 @@
 from typing import List, Any
 from .readers import cross_val
+import dataclasses
 
 
+@dataclasses.dataclass
 class GetAnnotationABC:
     target: str
 
     # for train annotation
-    train_dirs: List[str] = []
+    train_dirs: List[str] = dataclasses.field(default_factory=list)
     get_train_fn: Any = None
 
     # for val annotation
-    val_dirs: List[str] = []
+    val_dirs: List[str] = dataclasses.field(default_factory=list)
     get_val_fn: Any = None
 
     # for cross validation

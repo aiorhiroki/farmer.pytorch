@@ -2,9 +2,13 @@ import torch
 import os
 from .logger import Logger
 from .metrics import SegMetrics
+import dataclasses
 
 
+@dataclasses.dataclass
 class GetOptimizationABC:
+    train_data: torch.utils.data.Dataset
+    val_data: torch.utils.data.Dataset
     batch_size: int
     epochs: int
     lr: float
@@ -15,9 +19,7 @@ class GetOptimizationABC:
     result_dir: str = 'result'
     port: str = '12346'
 
-    def __init__(self, train_data, val_data):
-        self.train_data = train_data
-        self.val_data = val_data
+    def __post_init__(self):
         self.logger = Logger(self.result_dir)
         self.world_size = len(self.gpus.split(","))
         self.is_distributed = self.world_size > 1
