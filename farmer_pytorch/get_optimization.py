@@ -108,9 +108,9 @@ class GetOptimization:
                     self.logger(loss.item(), dice=dice.item())
         if rank == 0:
             self.logger.update_metrics()
-            self.on_epoch_end()
+        self.update_scheduler()
 
-    def on_epoch_end(self):
+    def update_scheduler(self):
         self.scheduler.step()
 
     def set_env(self, rank):
