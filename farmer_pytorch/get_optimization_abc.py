@@ -34,7 +34,6 @@ class GetOptimizationABC:
             self.train(train_loader, rank, sampler, epoch)
             self.validation(valid_loader, rank)
         self.cleanup()
-        return self.logger.get_latest_metrics()
 
     def set_params(self, rank):
         self.model = self.model.to(rank)
@@ -72,8 +71,8 @@ class GetOptimizationABC:
             sampler.set_epoch(epoch)
         if rank == 0:
             print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
+            self.logger.set_progbar(len(train_loader))
         self.model.train()
-        self.logger.set_progbar(len(train_loader))
         for inputs, labels in train_loader:
             outputs = self.model(inputs.to(rank))
             loss = self.loss_func(outputs, labels.to(rank))
@@ -91,8 +90,8 @@ class GetOptimizationABC:
     def validation(self, valid_loader, rank):
         if rank == 0:
             print("\nvalidation step")
+            self.logger.set_progbar(len(valid_loader))
         self.model.eval()
-        self.logger.set_progbar(len(valid_loader))
         metrics = SegMetrics()
         with torch.no_grad():
             for inputs, labels in valid_loader:

@@ -19,11 +19,10 @@ class SegMetrics:
         output = output.view(batch_size, num_classes, -1)
         target = target.view(batch_size, num_classes, -1)
 
-        tp = (output * target).sum(2).sum(0)
-        fp = output.sum(2).sum(0) - tp
-        fn = target.sum(2).sum(0) - tp
-
-        return torch.cat([tp, fp, fn])
+        tp = (output * target).sum(2).sum(0, keepdim=True)
+        fp = output.sum(2).sum(0, keepdim=True) - tp
+        fn = target.sum(2).sum(0, keepdim=True) - tp
+        return torch.cat((tp, fp, fn))
 
     def compute_metric(self, confusion, metric_fn, class_weights=1.0):
         if self.total_confusion is None:
@@ -35,7 +34,7 @@ class SegMetrics:
         class_weights = class_weights / class_weights.sum()
         score = metric_fn(tp, fp, fn)
         score = self._handle_zero_division(score)
-        score = (score * class_weights)
+        score = (score * class_weights).mean()
         return score
 
     def _handle_zero_division(self, x):
