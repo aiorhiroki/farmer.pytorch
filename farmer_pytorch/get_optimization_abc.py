@@ -37,8 +37,12 @@ class GetOptimizationABC:
         return self.logger.get_latest_metrics()
 
     def set_params(self, rank):
-        self.model = torch.nn.parallel.DistributedDataParallel(
-          self.model.to(rank), device_ids=[rank], find_unused_parameters=True)
+        self.model = self.model.to(rank)
+        self.model_without_ddp = self.model
+        if self.is_distributed:
+            self.model = torch.nn.parallel.DistributedDataParallel(
+                self.model, device_ids=[rank], find_unused_parameters=True)
+            self.model_without_ddp = self.model.module
         self.set_optimizer()
         self.set_scheduler()
 
@@ -80,7 +84,9 @@ class GetOptimizationABC:
                 self.logger(loss.item(), lr=self.scheduler.get_last_lr())
         self.scheduler.step()
         if rank == 0:
-            torch.save(self.model.state_dict(), f'{self.result_dir}/last.pth')
+            torch.save(
+                self.model_without_ddp.state_dict(),
+                f'{self.result_dir}/last.pth')
 
     def validation(self, valid_loader, rank):
         if rank == 0:
