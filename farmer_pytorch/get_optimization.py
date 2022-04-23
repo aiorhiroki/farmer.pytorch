@@ -2,6 +2,7 @@ import torch
 import os
 from .logger import Logger
 from .metrics import SegMetrics
+import utils
 import dataclasses
 
 
@@ -71,9 +72,8 @@ class GetOptimization:
     def train(self, train_loader, rank, sampler, epoch):
         if self.is_distributed:
             sampler.set_epoch(epoch)
-        if rank == 0:
-            print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
-            self.logger.set_progbar(len(train_loader))
+        print(f"\ntrain step, epoch: {epoch + 1}/{self.epochs}")
+        self.logger.set_progbar(len(train_loader))
         self.model.train()
         for inputs, labels in train_loader:
             outputs = self.model(inputs.to(rank))
@@ -81,8 +81,7 @@ class GetOptimization:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            if rank == 0:
-                self.logger(
+            self.logger(
                     loss.item(),
                     lr=[group['lr'] for group in self.optimizer.param_groups])
         if rank == 0:
@@ -91,9 +90,8 @@ class GetOptimization:
                 f'{self.result_dir}/last.pth')
 
     def validation(self, valid_loader, rank):
-        if rank == 0:
-            print("\nvalidation step")
-            self.logger.set_progbar(len(valid_loader))
+        print("\nvalidation step")
+        self.logger.set_progbar(len(valid_loader))
         self.model.eval()
         metrics = SegMetrics()
         with torch.no_grad():
@@ -103,11 +101,9 @@ class GetOptimization:
                 confusion = metrics.calc_confusion(outputs, labels.to(rank))
                 if self.is_distributed:
                     torch.distributed.all_reduce(confusion)
-                if rank == 0:
-                    dice = metrics.compute_metric(confusion, metrics.dice)
-                    self.logger(loss.item(), dice=dice.item())
-        if rank == 0:
-            self.logger.update_metrics()
+                dice = metrics.compute_metric(confusion, metrics.dice)
+                self.logger(loss.item(), dice=dice.item())
+        self.logger.update_metrics()
         self.update_scheduler()
 
     def update_scheduler(self):
@@ -120,6 +116,7 @@ class GetOptimization:
         os.environ['MASTER_PORT'] = self.port
         torch.distributed.init_process_group(
             "gloo", rank=rank, world_size=self.world_size)
+        utils.setup_for_distributed(rank == 0)
 
     def cleanup(self):
         torch.distributed.destroy_process_group()
