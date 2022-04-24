@@ -3,6 +3,7 @@ stages:
     cmd: python train_seg.py
     deps:
     - seg_data/CamVid
+    - train_seg.py
     outs:
     - result/last.pth
     metrics:

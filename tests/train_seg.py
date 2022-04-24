@@ -48,7 +48,7 @@ def main():
     batch_size = 16
     epochs = 20
     lr = 0.001
-    gpus = "0"
+    gpus = "0,1"
     optimizer_cls = torch.optim.Adam
     model = smp.FPN(encoder_name="efficientnet-b7", encoder_weights="imagenet",
                     activation="sigmoid", in_channels=3, classes=2,)

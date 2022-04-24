@@ -7,13 +7,16 @@ stages:
       md5: 30424acbbfd275aad68c44fb699416c2.dir
       size: 186849579
       nfiles: 1405
+    - path: train_seg.py
+      md5: 21ca553d9fe94b860a823a80d49aeea6
+      size: 1898
     outs:
     - path: result/dice.json
-      md5: 3b3141e283cc7e310e4ae3e2c6ae8774
-      size: 2558
+      md5: 6cbfdb0a4fa0a895ce62c9e206e66208
+      size: 1709
     - path: result/last.pth
-      md5: 9556bd5abae04cbafb74270694d3eac5
+      md5: de76d9e19809a6a55a453052bc27cdf1
       size: 264353356
     - path: result/scores.json
-      md5: 757d8dbf853db0412824ccad29b76ea7
-      size: 27
+      md5: 7b1e46810505572cc3b3c81350a059db
+      size: 28
