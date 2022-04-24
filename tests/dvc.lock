@@ -1,0 +1,19 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python train_seg.py
+    deps:
+    - path: seg_data/CamVid
+      md5: 30424acbbfd275aad68c44fb699416c2.dir
+      size: 186849579
+      nfiles: 1405
+    outs:
+    - path: result/dice.json
+      md5: 3b3141e283cc7e310e4ae3e2c6ae8774
+      size: 2558
+    - path: result/last.pth
+      md5: 9556bd5abae04cbafb74270694d3eac5
+      size: 264353356
+    - path: result/scores.json
+      md5: 757d8dbf853db0412824ccad29b76ea7
+      size: 27

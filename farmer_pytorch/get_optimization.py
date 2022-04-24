@@ -2,7 +2,7 @@ import torch
 import os
 from .logger import Logger
 from .metrics import SegMetrics
-import utils
+from . import utils
 import dataclasses
 
 

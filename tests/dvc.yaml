@@ -1,0 +1,13 @@
+stages:
+  train:
+    cmd: python train_seg.py
+    deps:
+    - seg_data/CamVid
+    outs:
+    - result/last.pth
+    metrics:
+    - result/scores.json:
+        cache: false
+    plots:
+    - result/dice.json:
+        cache: false
