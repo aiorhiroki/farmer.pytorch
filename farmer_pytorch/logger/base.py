@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import json
 from pathlib import Path
+import time
 from .progress_bar import ProgressBar
 
 
@@ -9,6 +10,7 @@ class Logger:
         Path(result_dir).mkdir(exist_ok=True, parents=True)
         self.result_dir = result_dir
         self.dice_history = []
+        self.start_time = time.time()
 
     def set_progbar(self, nb_iters):
         self.prog_bar = ProgressBar(nb_iters)
@@ -30,7 +32,8 @@ class Logger:
         plt.close()
 
     def _save_metric(self):
-        scores = dict(dice=self.dice_history[-1])
+        took_time = time.time() - self.start_time
+        scores = dict(dice=self.dice_history[-1], time=int(took_time))
         with open(f"{self.result_dir}/scores.json", "w") as fw:
             json.dump(scores, fw)
 

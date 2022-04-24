@@ -42,6 +42,8 @@ class GetOptimization:
         self.model = self.model.to(rank)
         self.model_without_ddp = self.model
         if self.is_distributed:
+            self.model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(
+                self.model)
             self.model = torch.nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[rank], find_unused_parameters=True)
             self.model_without_ddp = self.model.module
@@ -60,12 +62,12 @@ class GetOptimization:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             self.train_data) if self.is_distributed else None
         train_loader = torch.utils.data.DataLoader(
-            self.train_data, batch_size=self.batch_size, drop_last=True,
+            self.train_data, batch_size=self.batch_size, pin_memory=True,
             shuffle=(train_sampler is None), sampler=train_sampler)
         valid_sampler = torch.utils.data.distributed.DistributedSampler(
             self.val_data) if self.is_distributed else None
         valid_loader = torch.utils.data.DataLoader(
-            self.val_data, batch_size=self.batch_size, drop_last=True,
+            self.val_data, batch_size=self.batch_size, pin_memory=True,
             shuffle=False, sampler=valid_sampler)
         return train_sampler, train_loader, valid_loader
 
