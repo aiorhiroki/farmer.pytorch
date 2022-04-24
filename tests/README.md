@@ -20,4 +20,4 @@ tail train.out -f
 ```
 
 ### Visualize
-[DVC Studio](https://studio.iterative.ai/user/aiorhiroki/views/fmp_dvc-ofivsq5w54)
+[DVC Studio](https://studio.iterative.ai/user/aiorhiroki/views/farmer_pytorch-vf2yvhty6d)

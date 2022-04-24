@@ -46,7 +46,7 @@ def main():
         [albu.augmentations.geometric.resize.Resize(256, 512)])
 
     batch_size = 16
-    epochs = 30
+    epochs = 20
     lr = 0.001
     gpus = "0"
     optimizer_cls = torch.optim.Adam
