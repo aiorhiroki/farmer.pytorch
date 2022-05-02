@@ -30,7 +30,7 @@ class GetOptimization:
     
     def __call__(self, trial):
         if self.use_optuna:
-            self.optuna_fit(trial)
+            return self.optuna_fit(trial)
         else:
             torch.multiprocessing.spawn(
                 self.fit, args=(), nprocs=self.world_size, join=True)
@@ -48,7 +48,6 @@ class GetOptimization:
 
     def optuna_fit(self, trial):
         rank = 0
-        self.set_env(rank)
         self.set_params(rank)
         sampler, train_loader, valid_loader = self.make_data_loader()
         for epoch in range(self.epochs):
@@ -56,7 +55,7 @@ class GetOptimization:
             self.validation(valid_loader, rank)
             self.for_optuna(trial, epoch)
 
-        self.cleanup()
+        return self.logger.get_latest_metrics()
 
     def set_params(self, rank):
         self.model = self.model.to(rank)
@@ -151,7 +150,7 @@ class GetOptimization:
 
     def for_optuna(self, trial, epoch):
         torch.save(self.model.state_dict(), f'{self.result_dir}/trial_{trial.number}_params.pth')
-        # optuna によるpruneの提起
+        # report and suggest prune
         print("report\n")
         trial.report(self.logger.get_latest_metrics(), epoch)
         if trial.should_prune():
