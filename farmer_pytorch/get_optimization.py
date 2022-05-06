@@ -4,6 +4,8 @@ from .logger import Logger
 from .metrics import SegMetrics
 from . import utils
 import dataclasses
+import optuna
+from functools import singledispatch
 
 
 @dataclasses.dataclass
@@ -18,17 +20,23 @@ class GetOptimization:
     model: torch.nn.Module
     loss_func: torch.nn.Module
     result_dir: str = 'result'
+    use_optuna: bool = False
     port: str = '12346'
 
     def __post_init__(self):
         self.logger = Logger(self.result_dir)
         self.world_size = len(self.gpus.split(","))
         self.is_distributed = self.world_size > 1
-
-    def __call__(self):
-        torch.multiprocessing.spawn(
-            self.fit, args=(), nprocs=self.world_size, join=True)
-
+    
+    
+    def __call__(self, trial):
+        if self.use_optuna:
+            return self.optuna_fit(trial)
+        else:
+            torch.multiprocessing.spawn(
+                self.fit, args=(), nprocs=self.world_size, join=True)
+            
+    
     def fit(self, rank):
         self.set_env(rank)
         self.set_params(rank)
@@ -36,7 +44,19 @@ class GetOptimization:
         for epoch in range(self.epochs):
             self.train(train_loader, rank, sampler, epoch)
             self.validation(valid_loader, rank)
+
         self.cleanup()
+
+    def optuna_fit(self, trial):
+        rank = 0
+        self.set_params(rank)
+        sampler, train_loader, valid_loader = self.make_data_loader()
+        for epoch in range(self.epochs):
+            self.train(train_loader, rank, sampler, epoch)
+            self.validation(valid_loader, rank)
+            self.for_optuna(trial, epoch)
+
+        return self.logger.get_latest_metrics()
 
     def set_params(self, rank):
         self.model = self.model.to(rank)
@@ -126,3 +146,13 @@ class GetOptimization:
     @staticmethod
     def scheduler_func(epoch):
         return 0.95 ** (epoch-10) if epoch > 10 else 1
+
+    def for_optuna(self, trial, epoch):
+        torch.save(self.model.state_dict(), f'{self.result_dir}/trial_{trial.number}_params.pth')
+        # report and suggest prune
+        print("report\n")
+        trial.report(self.logger.get_latest_metrics(), epoch)
+        if trial.should_prune():
+            print(f"Pruned at epoch:{epoch}\n")
+            raise optuna.TrialPruned()
+
